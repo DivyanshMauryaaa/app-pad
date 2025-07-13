@@ -10,6 +10,7 @@ import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2 } from "lucide-react";
+import { Checkbox } from "@/components/ui/checkbox";
 
 const BugsPage = () => {
     const [bugs, setBugs] = useState<any[]>([]);
@@ -227,19 +228,34 @@ const BugsPage = () => {
                             <li key={bug.id} className="bg-card rounded-lg p-4 border border-border shadow">
                                 <div className="flex justify-between items-center">
                                     <div>
-                                        <div className="font-semibold text-lg">{bug.name}</div>
+                                        <div className="flex items-center gap-2">
+                                            <Checkbox
+                                                checked={!!bug.resolved}
+                                                onCheckedChange={async (checked) => {
+                                                    await supabase.from('bugs').update({ resolved: checked }).eq('id', bug.id);
+                                                    getBugs();
+                                                }}
+                                                aria-label={bug.resolved ? "Mark as unresolved" : "Mark as resolved"}
+                                            />
+                                            <span className={`font-semibold text-lg ${bug.resolved ? "line-through text-muted-foreground" : ""}`}>
+                                                {bug.name}
+                                            </span>
+                                        </div>
                                         <div className="text-muted-foreground text-sm">{bug.description}</div>
                                         {bug.link && (
                                             <a href={bug.link} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline text-xs">
                                                 {bug.link}
                                             </a>
                                         )}
+                                        {bug.resolved && (
+                                            <p className="text-green-700">Resolved!</p>
+                                        )}
                                     </div>
                                     <div className="flex items-center gap-2">
                                         <span className={`px-2 py-1 rounded text-sm ${bug.severity?.toLowerCase() === "critical" ? "bg-red-700 text-white" :
                                                 bug.severity?.toLowerCase() === "high" ? "bg-red-500 text-white" :
-                                                    bug.severity?.toLowerCase() === "medium" ? "bg-yellow-600 text-white" :
-                                                        "bg-green-700 text-white"
+                                                bug.severity?.toLowerCase() === "medium" ? "bg-yellow-600 text-white" :
+                                                "bg-green-700 text-white"
                                             }`}>
                                             {bug.severity}
                                         </span>

@@ -7,6 +7,15 @@ import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } f
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import ReactMarkdown from "react-markdown";
+import remarkGfm from "remark-gfm";
+import remarkBreaks from "remark-breaks";
+import rehypeHighlight from "rehype-highlight";
+import rehypeSlug from "rehype-slug";
+import rehypeAutolinkHeadings from "rehype-autolink-headings";
+import "highlight.js/styles/github-dark.css"; // or another highlight.js theme
+import { SaveIcon, Trash2 } from 'lucide-react';
 
 const DocumentsPage = () => {
     const params = useParams();
@@ -118,10 +127,15 @@ const DocumentsPage = () => {
                             <li
                                 key={doc.id}
                                 className="bg-card rounded-lg p-4 border border-border shadow cursor-pointer hover:bg-muted transition"
-                                onClick={() => openDoc(doc.id)}
                             >
-                                <div className="font-semibold text-lg text-foreground">{doc.name}</div>
+                                <div className="font-semibold text-lg text-foreground"
+                                    onClick={() => openDoc(doc.id)}
+                                >{doc.name}</div>
                                 <div className="text-muted-foreground text-sm whitespace-pre-line mt-2 line-clamp-2">{doc.content}</div>
+                                <Trash2 className='cursor-pointer mt-2 hover:text-red-600' size={20} onClick={async () => {
+                                    await supabase.from('documents').delete().eq('id', doc.id);
+                                    pullDocsfromdb();
+                                }} />
                             </li>
                         ))}
                     </ul>
@@ -129,16 +143,98 @@ const DocumentsPage = () => {
             </div>
             {/* Fullscreen dialog for viewing a document */}
             <Dialog open={!!docId && !!viewDoc} onOpenChange={open => { if (!open) closeDoc(); }}>
-                <DialogContent fullscreen className='p-6'>
+                <DialogContent fullscreen className='p-6 flex flex-col overflow-scroll'>
                     <DialogHeader>
                         <DialogTitle className="text-2xl">{viewDoc?.name}</DialogTitle>
                         <DialogDescription>
                             Document ID: {viewDoc?.id}
                         </DialogDescription>
                     </DialogHeader>
-                    <div className="flex-1 overflow-auto mt-4 text-foreground whitespace-pre-line">
-                        {viewDoc?.content}
-                    </div>
+                    <Tabs defaultValue="preview" className="flex-1 flex flex-col mt-4">
+                        <TabsList className="mb-4 w-48">
+                            <TabsTrigger value="preview">Preview</TabsTrigger>
+                            <TabsTrigger value="edit">Edit</TabsTrigger>
+                        </TabsList>
+                        <Button
+                            onClick={async () => {
+                                await supabase.from('documents').update({ content: viewDoc.content }).eq('id', viewDoc.id);
+                                pullDocsfromdb();
+                            }}
+                            className="cursor-pointer self-start flex gap-2"
+                        >
+                            <SaveIcon /> Save
+                        </Button>
+                        <hr />
+                        <TabsContent value="preview" className="flex-1 overflow-auto">
+                            <article className="prose prose-invert w-full max-w-none border dark:border-gray-700 p-5 border-gray-300">
+                                <ReactMarkdown
+                                    remarkPlugins={[remarkGfm, remarkBreaks]}
+                                    rehypePlugins={[
+                                        rehypeHighlight,
+                                        rehypeSlug,
+                                        [rehypeAutolinkHeadings, { behavior: "wrap" }]
+                                    ]}
+                                    components={{
+                                        // Optional: customize rendering for checkboxes, tables, etc.
+                                        // Example: GitHub-style checkboxes
+                                        input: ({ node, ...props }) =>
+                                            props.type === "checkbox" ? (
+                                                <input {...props} disabled className="mr-2 accent-blue-500" />
+                                            ) : (
+                                                <input {...props} />
+                                            ),
+                                        // Optional: style tables
+                                        table: ({ node, ...props }) => (
+                                            <table className="border-collapse border border-border" {...props} />
+                                        ),
+                                        th: ({ node, ...props }) => (
+                                            <th className="border border-border bg-muted px-2 py-1" {...props} />
+                                        ),
+                                        td: ({ node, ...props }) => (
+                                            <td className="border border-border px-2 py-1" {...props} />
+                                        ),
+                                        h1: ({ node, ...props }) => (
+                                            <h1 className='text-5xl py-3' {...props} />
+                                        ),
+                                        h2: ({ node, ...props }) => (
+                                            <h2 className='text-3xl py-3' {...props} />
+                                        ),
+                                        h3: ({ node, ...props }) => (
+                                            <h3 className='text-2xl py-3' {...props} />
+                                        ),
+                                        code({
+                                            // node,
+                                            inline,
+                                            className,
+                                            children,
+                                            ...props
+                                        }: React.HTMLAttributes<HTMLElement> & { inline?: boolean; children?: React.ReactNode }) {
+                                            return inline ? (
+                                                <code className="bg-muted px-1 rounded text-sm" {...props}>{children}</code>
+                                            ) : (
+                                                <pre className="bg-muted rounded p-3 overflow-x-auto my-2">
+                                                    <code className={className} {...props}>
+                                                        {children}
+                                                    </code>
+                                                </pre>
+                                            );
+                                        },
+                                    }}
+                                >
+                                    {viewDoc?.content || ""}
+                                </ReactMarkdown>
+                            </article>
+                        </TabsContent>
+                        <TabsContent value="edit" className="flex-1 flex flex-col">
+                            <Textarea
+                                value={viewDoc?.content}
+                                onChange={e => setViewDoc({ ...viewDoc, content: e.target.value })}
+                                className="flex-1 mb-4"
+                                rows={16}
+                            />
+
+                        </TabsContent>
+                    </Tabs>
                 </DialogContent>
             </Dialog>
         </div>

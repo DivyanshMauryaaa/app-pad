@@ -1,13 +1,16 @@
 'use client';
-
 import { useState, useEffect } from "react";
 import supabase from "@/supabase/client";
 import { useParams } from "next/navigation";
-import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogFooter } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
-import { Trash2 } from "lucide-react";
+import { Label } from "@/components/ui/label";
+import { AlertDialog, AlertDialogAction, AlertDialogCancel, AlertDialogContent, AlertDialogDescription, AlertDialogFooter, AlertDialogHeader, AlertDialogTitle, AlertDialogTrigger } from "@/components/ui/alert-dialog";
+import { Trash2, Edit, Plus, Eye, EyeOff } from "lucide-react";
+import { toast } from "sonner";
+import { Card, CardContent, CardHeader } from "@/components/ui/card";
 
 const fields = [
   { key: "name", label: "Credential Name", type: "text" },
@@ -16,149 +19,393 @@ const fields = [
   { key: "database_name", label: "Database Name", type: "text" },
   { key: "username", label: "Username", type: "text" },
   { key: "password", label: "Password", type: "password" },
-  { key: "connection_string", label: "Connection String", type: "text" },
+  { key: "url", label: "Connection String", type: "text" },
   { key: "database_type", label: "Database Type", type: "text" },
 ];
+
+interface Credential {
+  id: string;
+  name: string;
+  host: string;
+  port: number;
+  database_name: string;
+  username: string;
+  password: string;
+  url: string;
+  database_type: string;
+  app_id: string;
+}
 
 export default function DatabasePage() {
   const params = useParams();
   const appId = params.id as string;
-
-  const [creds, setCreds] = useState<any[]>([]);
+  const [creds, setCreds] = useState<Credential[]>([]);
   const [loading, setLoading] = useState(true);
-
-  // Dialog state for adding
-  const [open, setOpen] = useState(false);
-  const [form, setForm] = useState({
+  const [error, setError] = useState('');
+  const [isAddDialogOpen, setIsAddDialogOpen] = useState(false);
+  const [isEditDialogOpen, setIsEditDialogOpen] = useState(false);
+  const [isViewDialogOpen, setIsViewDialogOpen] = useState(false);
+  const [selectedCred, setSelectedCred] = useState<Credential | null>(null);
+  const [showPassword, setShowPassword] = useState(false);
+  const [formData, setFormData] = useState<Partial<Credential>>({
     name: "",
     host: "",
-    port: "",
+    port: 5432,
     database_name: "",
     username: "",
     password: "",
-    connection_string: "",
-    database_type: "",
+    url: "",
+    database_type: "postgresql",
   });
 
-  const fetchCreds = async () => {
-    setLoading(true);
-    const { data } = await supabase
-      .from("database_credentials")
-      .select("*")
-      .eq("app_id", appId)
-      .order("created_at", { ascending: false });
-    setCreds(data || []);
-    setLoading(false);
+  const getCreds = async () => {
+    try {
+      const { data, error } = await supabase.from('database_credentials')
+        .select("*")
+        .eq('app_id', appId);
+
+      if (error) throw error;
+      setCreds(data || []);
+    } catch (err: any) {
+      setError(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   useEffect(() => {
-    if (appId) fetchCreds();
+    if (appId) {
+      getCreds();
+    }
   }, [appId]);
 
-  const handleChange = (key: string, value: string) => {
-    setForm((prev) => ({ ...prev, [key]: value }));
-  };
-
-  const addCred = async () => {
-    await supabase.from("database_credentials").insert({
-      ...form,
-      app_id: appId,
-    });
-    setForm({
+  const resetForm = () => {
+    setFormData({
       name: "",
       host: "",
-      port: "",
+      port: 5432,
       database_name: "",
       username: "",
       password: "",
-      connection_string: "",
-      database_type: "",
+      url: "",
+      database_type: "postgresql",
     });
-    setOpen(false);
-    fetchCreds();
+  };
+
+  const handleInputChange = (key: string, value: string | number) => {
+    setFormData(prev => ({
+      ...prev,
+      [key]: value
+    }));
+  };
+
+  const addCred = async () => {
+    if (!formData.name?.trim()) {
+      toast.error("Credential name is required");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('database_credentials')
+        .insert({
+          ...formData,
+          app_id: appId,
+        });
+
+      if (error) throw error;
+
+      await getCreds();
+      setIsAddDialogOpen(false);
+      resetForm();
+      toast.success("Database credential added successfully");
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
+  };
+
+  const updateCred = async () => {
+    if (!selectedCred || !formData.name?.trim()) {
+      toast.error("Credential name is required");
+      return;
+    }
+
+    setLoading(true);
+    try {
+      const { error } = await supabase
+        .from('database_credentials')
+        .update(formData)
+        .eq('id', selectedCred.id);
+
+      if (error) throw error;
+
+      await getCreds();
+      setIsEditDialogOpen(false);
+      setSelectedCred(null);
+      resetForm();
+      toast.success("Database credential updated successfully");
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
   const deleteCred = async (id: string) => {
-    await supabase.from("database_credentials").delete().eq("id", id);
-    fetchCreds();
+    setLoading(true);
+    try {
+      const { error } = await supabase.from('database_credentials')
+        .delete()
+        .eq('id', id);
+
+      if (error) throw error;
+
+      await getCreds();
+      toast.success("Database credential deleted successfully");
+    } catch (err: any) {
+      setError(err.message);
+      toast.error(err.message);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  return (
-    <div className="bg-background text-foreground min-h-screen p-6">
-      <div className="flex justify-between items-center mb-6">
-        <h2 className="text-2xl font-bold">Database Credentials</h2>
-        <Dialog open={open} onOpenChange={setOpen}>
-          <DialogTrigger asChild>
-            <Button variant="secondary">Add Credentials</Button>
-          </DialogTrigger>
-          <DialogContent>
-            <DialogHeader>
-              <DialogTitle>Add Database Credentials</DialogTitle>
-              <DialogDescription>
-                Fill in the details to save your database credentials.
-              </DialogDescription>
-            </DialogHeader>
-            <form
-              onSubmit={e => {
-                e.preventDefault();
-                addCred();
-              }}
-              className="space-y-2"
-            >
-              {fields.map(f => (
-                <Input
-                  key={f.key}
-                  type={f.type}
-                  placeholder={f.label}
-                  value={form[f.key as keyof typeof form]}
-                  onChange={e => handleChange(f.key, e.target.value)}
-                  className="mb-2"
-                //   required={f.key !== "connection_string" || "port"} // connection_string is optional
-                />
-              ))}
-              <Button type="submit" className="w-full mt-2">
-                Save Credentials
+  const handleEdit = (cred: Credential) => {
+    setSelectedCred(cred);
+    setFormData(cred);
+    setIsEditDialogOpen(true);
+  };
+
+  const handleView = (cred: Credential) => {
+    setSelectedCred(cred);
+    setIsViewDialogOpen(true);
+  };
+
+  const handleAddClick = () => {
+    resetForm();
+    setIsAddDialogOpen(true);
+  };
+
+  const renderFormFields = () => {
+    return fields.map((field) => (
+      <div key={field.key} className="grid grid-cols-4 items-center gap-4">
+        <Label htmlFor={field.key} className="text-right">
+          {field.label}
+        </Label>
+        <div className="col-span-3">
+          {field.key === 'url' ? (
+            <Textarea
+              id={field.key}
+              value={formData[field.key as keyof Credential] || ''}
+              onChange={(e) => handleInputChange(field.key, e.target.value)}
+              placeholder={`Enter ${field.label.toLowerCase()}`}
+            />
+          ) : (
+            <Input
+              id={field.key}
+              type={field.type}
+              value={formData[field.key as keyof Credential] || ''}
+              onChange={(e) => handleInputChange(field.key, field.type === 'number' ? Number(e.target.value) : e.target.value)}
+              placeholder={`Enter ${field.label.toLowerCase()}`}
+            />
+          )}
+        </div>
+      </div>
+    ));
+  };
+
+  const renderViewFields = () => {
+    if (!selectedCred) return null;
+
+    return fields.map((field) => (
+      <div key={field.key} className="grid grid-cols-4 items-center gap-4">
+        <Label className="text-right font-medium">
+          {field.label}:
+        </Label>
+        <div className="col-span-3">
+          {field.type === 'password' ? (
+            <div className="flex items-center gap-2">
+              <span className="font-mono text-sm">
+                {showPassword ? selectedCred[field.key as keyof Credential] : '••••••••'}
+              </span>
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={() => setShowPassword(!showPassword)}
+              >
+                {showPassword ? <EyeOff size={16} /> : <Eye size={16} />}
               </Button>
-            </form>
-          </DialogContent>
-        </Dialog>
+            </div>
+          ) : (
+            <span className="font-mono text-sm">
+              {selectedCred[field.key as keyof Credential] || 'Not set'}
+            </span>
+          )}
+        </div>
       </div>
-      <div>
-        {loading ? (
-          <div className="text-muted-foreground">Loading...</div>
-        ) : creds.length === 0 ? (
-          <div className="text-muted-foreground">No credentials stored yet.</div>
-        ) : (
-          <ul className="space-y-4">
-            {creds.map(cred => (
-              <li key={cred.id} className="bg-card rounded-lg p-4 border border-border shadow">
-                <div className="flex justify-between items-center">
-                  <div>
-                    <div className="font-semibold text-lg">{cred.name}</div>
-                    <div className="text-muted-foreground text-sm">Type: {cred.database_type}</div>
-                    <div className="text-muted-foreground text-xs mt-2">
-                      <strong>Host:</strong> {cred.host}<br />
-                      <strong>Port:</strong> {cred.port}<br />
-                      <strong>DB Name:</strong> {cred.database_name}<br />
-                      <strong>User:</strong> {cred.username}<br />
-                      <strong>Password:</strong> <span className="blur-sm hover:blur-none transition">{cred.password}</span><br />
-                      <strong>Connection String:</strong> <span className="break-all">{cred.connection_string}</span>
-                    </div>
-                  </div>
-                  <Button
-                    variant="destructive"
-                    size="icon"
-                    onClick={() => deleteCred(cred.id)}
-                    aria-label="Delete credential"
-                  >
-                    <Trash2 />
-                  </Button>
+    ));
+  };
+
+  if (loading && creds.length === 0) {
+    return (
+      <div className="p-6">
+        <div className="flex items-center justify-center h-32">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+        </div>
+      </div>
+    );
+  }
+
+  return (
+    <div className="p-6">
+      <div className="flex justify-between items-center mb-6">
+        <div>
+          <h1 className="text-2xl font-bold">Database Credentials</h1>
+          <p className="text-gray-600">Store your database credentials here!</p>
+        </div>
+        <Button onClick={handleAddClick} className="flex items-center gap-2">
+          <Plus size={16} />
+          Add Credential
+        </Button>
+      </div>
+
+      {error && (
+        <div className="bg-red-50 border border-red-200 text-red-600 px-4 py-3 rounded mb-4">
+          {error}
+        </div>
+      )}
+
+      <div className="grid gap-4">
+        {creds.map((cred) => (
+          <Card key={cred.id} className="">
+            <CardContent className="flex justify-between items-start">
+              <div>
+                <h3 className="font-semibold text-lg">{cred.name}</h3>
+                <div className="">
+                  <p className="text-sm text-gray-600">{cred.host}:{cred.port}</p>
+                  {/* <br /> */}
+                  <p className="text-sm text-gray-500">Database: {cred.database_name}</p>
                 </div>
-              </li>
-            ))}
-          </ul>
-        )}
+              </div>
+              <div className="flex gap-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleView(cred)}
+                >
+                  <Eye size={16} />
+                </Button>
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => handleEdit(cred)}
+                >
+                  <Edit size={16} />
+                </Button>
+                <AlertDialog>
+                  <AlertDialogTrigger asChild>
+                    <Button variant="outline" size="sm">
+                      <Trash2 size={16} />
+                    </Button>
+                  </AlertDialogTrigger>
+                  <AlertDialogContent>
+                    <AlertDialogHeader>
+                      <AlertDialogTitle>Are you absolutely sure?</AlertDialogTitle>
+                      <AlertDialogDescription>
+                        This action cannot be undone. This will permanently delete the
+                        database credential "{cred.name}" from our servers.
+                      </AlertDialogDescription>
+                    </AlertDialogHeader>
+                    <AlertDialogFooter>
+                      <AlertDialogCancel>Cancel</AlertDialogCancel>
+                      <AlertDialogAction onClick={() => deleteCred(cred.id)}>
+                        Delete
+                      </AlertDialogAction>
+                    </AlertDialogFooter>
+                  </AlertDialogContent>
+                </AlertDialog>
+              </div>
+            </CardContent>
+          </Card>
+        ))}
       </div>
+
+      {creds.length === 0 && !loading && (
+        <div className="text-center py-12">
+          <p className="text-gray-500">No database credentials found. Add one to get started!</p>
+        </div>
+      )}
+
+      {/* Add Dialog */}
+      <Dialog open={isAddDialogOpen} onOpenChange={setIsAddDialogOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>Add Database Credential</DialogTitle>
+            <DialogDescription>
+              Enter the details for your new database credential.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {renderFormFields()}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsAddDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={addCred} disabled={loading}>
+              {loading ? 'Adding...' : 'Add Credential'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Dialog */}
+      <Dialog open={isEditDialogOpen} onOpenChange={setIsEditDialogOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>Edit Database Credential</DialogTitle>
+            <DialogDescription>
+              Update the details for your database credential.
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {renderFormFields()}
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={updateCred} disabled={loading}>
+              {loading ? 'Updating...' : 'Update Credential'}
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* View Dialog */}
+      <Dialog open={isViewDialogOpen} onOpenChange={setIsViewDialogOpen}>
+        <DialogContent className="sm:max-w-[625px]">
+          <DialogHeader>
+            <DialogTitle>View Database Credential</DialogTitle>
+            <DialogDescription>
+              Database credential details for "{selectedCred?.name}"
+            </DialogDescription>
+          </DialogHeader>
+          <div className="grid gap-4 py-4">
+            {renderViewFields()}
+          </div>
+          <DialogFooter>
+            <Button onClick={() => setIsViewDialogOpen(false)}>
+              Close
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   );
 }

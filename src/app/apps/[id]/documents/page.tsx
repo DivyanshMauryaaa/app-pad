@@ -160,6 +160,7 @@ const DocumentsPage = () => {
                                         pullDocsfromdb();
                                     }
                                 }}
+                                className='focus:outline-none'
                             >
                                 {viewDoc?.name}
                             </p>

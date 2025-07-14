@@ -15,7 +15,7 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import "highlight.js/styles/github-dark.css"; // or another highlight.js theme
-import { SaveIcon, Trash2 } from 'lucide-react';
+import { ArrowLeftCircleIcon, SaveIcon, Trash2 } from 'lucide-react';
 
 const DocumentsPage = () => {
     const params = useParams();
@@ -144,10 +144,30 @@ const DocumentsPage = () => {
             {/* Fullscreen dialog for viewing a document */}
             <Dialog open={!!docId && !!viewDoc} onOpenChange={open => { if (!open) closeDoc(); }}>
                 <DialogContent fullscreen className='p-6 flex flex-col overflow-scroll'>
-                    <DialogHeader>
-                        <DialogTitle className="text-2xl">{viewDoc?.name}</DialogTitle>
+                    <DialogHeader className='bg-accent p-5 rounded-lg'>
+                        <DialogTitle
+                            className="text-5xl w-full flex gap-4 flex-col"
+                        >
+                            <ArrowLeftCircleIcon size={34} className='cursor-pointer hover:text-blue-800' onClick={() => closeDoc()} />
+                            <p
+                                contentEditable
+                                suppressContentEditableWarning
+                                onBlur={async (e) => {
+                                    const newTitle = e.currentTarget.textContent || "Untitled";
+                                    if (newTitle !== viewDoc?.name) {
+                                        await supabase.from('documents').update({ name: newTitle }).eq('id', viewDoc.id);
+                                        setViewDoc({ ...viewDoc, name: newTitle });
+                                        pullDocsfromdb();
+                                    }
+                                }}
+                            >
+                                {viewDoc?.name}
+                            </p>
+                        </DialogTitle>
                         <DialogDescription>
                             Document ID: {viewDoc?.id}
+                            <br />
+
                         </DialogDescription>
                     </DialogHeader>
                     <Tabs defaultValue="preview" className="flex-1 flex flex-col mt-4">
@@ -160,13 +180,14 @@ const DocumentsPage = () => {
                                 await supabase.from('documents').update({ content: viewDoc.content }).eq('id', viewDoc.id);
                                 pullDocsfromdb();
                             }}
+                            variant={'secondary'}
                             className="cursor-pointer self-start flex gap-2"
                         >
                             <SaveIcon /> Save
                         </Button>
                         <hr />
                         <TabsContent value="preview" className="flex-1 overflow-auto">
-                            <article className="prose prose-invert w-full max-w-none border dark:border-gray-700 p-5 border-gray-300">
+                            <article className="prose prose-invert rounded-lg w-[80%] max-w-none border dark:border-gray-700 p-7 m-auto border-gray-300">
                                 <ReactMarkdown
                                     remarkPlugins={[remarkGfm, remarkBreaks]}
                                     rehypePlugins={[
@@ -194,13 +215,16 @@ const DocumentsPage = () => {
                                             <td className="border border-border px-2 py-1" {...props} />
                                         ),
                                         h1: ({ node, ...props }) => (
-                                            <h1 className='text-5xl py-3' {...props} />
+                                            <h1 className='text-5xl py-3 hover:underline' {...props} />
                                         ),
                                         h2: ({ node, ...props }) => (
-                                            <h2 className='text-3xl py-3' {...props} />
+                                            <h2 className='text-3xl py-3 hover:underline' {...props} />
                                         ),
                                         h3: ({ node, ...props }) => (
-                                            <h3 className='text-2xl py-3' {...props} />
+                                            <h3 className='text-2xl py-3 hover:underline' {...props} />
+                                        ),
+                                        hr: ({ node, ...props }) => (
+                                            <hr className='py-2 mt-4' />
                                         ),
                                         code({
                                             // node,
@@ -229,7 +253,7 @@ const DocumentsPage = () => {
                             <Textarea
                                 value={viewDoc?.content}
                                 onChange={e => setViewDoc({ ...viewDoc, content: e.target.value })}
-                                className="flex-1 mb-4"
+                                className="flex-1 mb-4 w-[80%] m-auto"
                                 rows={16}
                             />
 

@@ -8,6 +8,7 @@ import { useEffect, useState } from 'react';
 import TodoContent from './todos/page';
 import BugsPage from './bugs/page';
 import DocumentsPage from './documents/page';
+import DatabasePage from './database/page';
 
 export default function Page() {
     const params = useParams();
@@ -48,8 +49,8 @@ export default function Page() {
             <p className='text-5xl mb-8'>{app?.name}</p>
 
             <Tabs value={tab} onValueChange={setTab} className="w-full mx-auto mt-8">
-                <TabsList className="flex bg-background rounded-lg shadow p-1 gap-2 max-w-xl border border-border">
-                    { [
+                <TabsList className="flex bg-background rounded-lg shadow p-1 gap-2 max-w-3xl border border-border">
+                    {[
                         { value: "todo", label: "Todo" },
                         { value: "bugs", label: "Bugs" },
                         { value: "documents", label: "Documents" },
@@ -57,17 +58,18 @@ export default function Page() {
                         { value: "vault", label: "Vault" },
                         { value: "brand", label: "Brand" },
                         { value: "ai", label: "AI" },
+                        { value: "database", label: "Database" }
                     ].map(tabItem => (
                         <TabsTrigger
                             key={tabItem.value}
                             value={tabItem.value}
                             className="flex-1 px-4 py-2 rounded-md transition-colors duration-200 text-foreground font-semibold
-                                data-[state=active]:bg-muted data-[state=active]:text-foreground
+                                data-[state=active]:bg-white data-[state=active]:text-gray-700
                                 hover:bg-muted hover:text-foreground"
                         >
                             {tabItem.label}
                         </TabsTrigger>
-                    )) }
+                    ))}
                 </TabsList>
                 <div className="bg-background rounded-b-lg shadow p-6 border border-t-0 border-border text-foreground">
                     <TabsContent value="todo">
@@ -102,6 +104,9 @@ export default function Page() {
                             <h2 className="text-xl font-semibold mb-2 text-foreground">AI</h2>
                             <p className="text-muted-foreground">AI features and integrations.</p>
                         </div>
+                    </TabsContent>
+                    <TabsContent value="database">
+                        <DatabasePage />
                     </TabsContent>
                 </div>
             </Tabs>

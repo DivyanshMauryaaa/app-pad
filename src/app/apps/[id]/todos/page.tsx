@@ -109,6 +109,16 @@ const TodoContent = () => {
         else setTodos([]);
     }, [selectedList]);
 
+    if (loading && lists.length === 0) {
+        return (
+            <div className="p-6">
+                <div className="flex items-center justify-center h-32">
+                    <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-gray-900"></div>
+                </div>
+            </div>
+        );
+    }
+
     return (
         <div className="bg-background text-foreground min-h-screen p-6">
             <h2 className="text-2xl font-bold mb-4">Todo Lists</h2>

@@ -9,6 +9,8 @@ import TodoContent from './todos/page';
 import BugsPage from './bugs/page';
 import DocumentsPage from './documents/page';
 import DatabasePage from './database/page';
+import Vault from './vault/page';
+import BuildsPage from './builds/page';
 
 export default function Page() {
     const params = useParams();
@@ -56,22 +58,22 @@ export default function Page() {
                         { value: "documents", label: "Documents" },
                         { value: "builds", label: "Builds" },
                         { value: "vault", label: "Vault" },
+                        { value: "database", label: "Database" },
                         { value: "brand", label: "Brand" },
                         { value: "ai", label: "AI" },
-                        { value: "database", label: "Database" }
                     ].map(tabItem => (
                         <TabsTrigger
                             key={tabItem.value}
                             value={tabItem.value}
                             className="flex-1 px-4 py-2 rounded-md transition-colors duration-200 text-foreground font-semibold
-                                data-[state=active]:bg-white data-[state=active]:text-gray-700
-                                hover:bg-muted hover:text-foreground"
+                                dark:data-[state=active]:bg-white dark:data-[state=active]:text-gray-700
+                                hover:bg-muted hover:text-foreground data-[state=active]:text-white data-[state=active]:bg-slate-800 cursor-pointer"
                         >
                             {tabItem.label}
                         </TabsTrigger>
                     ))}
                 </TabsList>
-                <div className="bg-background rounded-b-lg shadow p-6 border border-t-0 border-border text-foreground">
+                <div className="bg-background rounded-b-lg shadow p-6 border mt-3 border-border text-foreground">
                     <TabsContent value="todo">
                         <TodoContent />
                     </TabsContent>
@@ -82,16 +84,13 @@ export default function Page() {
                         <DocumentsPage />
                     </TabsContent>
                     <TabsContent value="builds">
-                        <div>
-                            <h2 className="text-xl font-semibold mb-2 text-foreground">Builds</h2>
-                            <p className="text-muted-foreground">View and manage builds for this app.</p>
-                        </div>
+                        <BuildsPage />
                     </TabsContent>
                     <TabsContent value="vault">
-                        <div>
-                            <h2 className="text-xl font-semibold mb-2 text-foreground">Vault</h2>
-                            <p className="text-muted-foreground">Manage environment variables and secrets.</p>
-                        </div>
+                        <Vault />
+                    </TabsContent>
+                    <TabsContent value="database">
+                        <DatabasePage />
                     </TabsContent>
                     <TabsContent value="brand">
                         <div>
@@ -104,9 +103,6 @@ export default function Page() {
                             <h2 className="text-xl font-semibold mb-2 text-foreground">AI</h2>
                             <p className="text-muted-foreground">AI features and integrations.</p>
                         </div>
-                    </TabsContent>
-                    <TabsContent value="database">
-                        <DatabasePage />
                     </TabsContent>
                 </div>
             </Tabs>

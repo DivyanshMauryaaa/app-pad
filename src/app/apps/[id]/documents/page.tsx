@@ -3,7 +3,7 @@
 import { useState, useEffect } from 'react';
 import supabase from '@/supabase/client';
 import { useParams, useSearchParams, useRouter } from 'next/navigation';
-import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription } from "@/components/ui/dialog";
+import { Dialog, DialogContent, DialogHeader, DialogTitle, DialogDescription, DialogTrigger } from "@/components/ui/dialog";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
@@ -15,7 +15,10 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import "highlight.js/styles/github-dark.css"; // or another highlight.js theme
-import { ArrowLeftCircleIcon, SaveIcon, Trash2 } from 'lucide-react';
+import { ArrowLeftCircleIcon, Copy, Eye, SaveIcon, Trash2 } from 'lucide-react';
+import { toast } from 'sonner';
+// import { AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 
 const DocumentsPage = () => {
     const params = useParams();
@@ -87,6 +90,8 @@ const DocumentsPage = () => {
         router.replace(`?`);
     };
 
+    const [showDialogOpen, setShowDialogOpen] = useState(false);
+
     if (loading && documents.length === 0) {
         return (
             <div className="p-6">
@@ -99,6 +104,8 @@ const DocumentsPage = () => {
 
     return (
         <div className='p-6'>
+
+
             <div className="flex justify-between items-center mb-6">
                 <h2 className="text-2xl font-bold text-foreground">Documents</h2>
                 <Dialog open={openAdd} onOpenChange={setOpenAdd}>
@@ -136,21 +143,52 @@ const DocumentsPage = () => {
                         {documents.map(doc => (
                             <li
                                 key={doc.id}
-                                className="bg-card rounded-lg p-4 border border-border shadow cursor-pointer hover:bg-muted transition"
+                                className="bg-card rounded-lg p-4 border border-border shadow cursor-pointer"
                             >
-                                <div className="font-semibold text-lg text-foreground"
+                                <div className="font-semibold text-lg text-foreground hover:underline"
                                     onClick={() => openDoc(doc.id)}
                                 >{doc.name}</div>
                                 <div className="text-muted-foreground text-sm whitespace-pre-line mt-2 line-clamp-2">{doc.content}</div>
-                                <Trash2 className='cursor-pointer mt-2 hover:text-red-600' size={20} onClick={async () => {
-                                    await supabase.from('documents').delete().eq('id', doc.id);
-                                    pullDocsfromdb();
-                                }} />
+
+
+                                <AlertDialog>
+                                    <AlertDialogTrigger asChild>
+                                        <Button variant="outline" className='hover:text-white hover:bg-red-600 flex gap-2'><Trash2 /> Delete</Button>
+                                    </AlertDialogTrigger>
+                                    <AlertDialogContent>
+                                        <AlertDialogHeader>
+                                            <AlertDialogTitle>Are you sure to delete this document?</AlertDialogTitle>
+                                            <AlertDialogDescription>
+                                                This action cannot be undone. This will permanently delete your account
+                                                and remove your data from our servers.
+                                            </AlertDialogDescription>
+                                        </AlertDialogHeader>
+                                        <AlertDialogFooter>
+                                            <AlertDialogAction>Cancel</AlertDialogAction>
+                                            <AlertDialogAction
+                                                onClick={async () => {
+                                                    await supabase.from('documents').delete().eq('id', doc.id);
+                                                    toast("Deleted Document Successfuly")
+                                                    pullDocsfromdb();
+                                                }}
+                                            >Continue</AlertDialogAction>
+                                        </AlertDialogFooter>
+                                    </AlertDialogContent>
+                                </AlertDialog>
+
+
+
+
                             </li>
                         ))}
                     </ul>
                 )}
             </div>
+
+
+            {/* CONTENT */}
+
+
             {/* Fullscreen dialog for viewing a document */}
             <Dialog open={!!docId && !!viewDoc} onOpenChange={open => { if (!open) closeDoc(); }}>
                 <DialogContent fullscreen className='p-6 flex flex-col overflow-scroll'>

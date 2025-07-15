@@ -10,6 +10,7 @@ import {
 import { Geist, Geist_Mono } from 'next/font/google'
 import './globals.css'
 import { ThemeSwitcher } from '@/components/ui/theme-switcher'
+import { Toaster } from 'sonner'
 
 const geistSans = Geist({
   variable: '--font-geist-sans',
@@ -49,6 +50,7 @@ export default function RootLayout({
             </SignedIn>
             <ThemeSwitcher />
           </header>
+          <Toaster />
           {children}
         </body>
       </html>

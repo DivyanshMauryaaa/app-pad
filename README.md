@@ -1,36 +1,158 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# FixFlow 🚀
 
-## Getting Started
+**The central control panel for your software business - where code meets clarity.**
 
-First, run the development server:
+FixFlow is an AI-powered platform that helps developers and indie makers manage everything around their software business. From auto-generating documentation to breaking down complex milestones, FixFlow keeps you focused on building while handling the business side seamlessly.
+
+---
+
+## 🎯 What Problem Does FixFlow Solve?
+
+Ever found yourself juggling 10 different tools just to manage one project? Spending hours writing documentation that gets outdated instantly? Struggling to explain technical progress to non-technical clients? 
+
+FixFlow eliminates the chaos by centralizing:
+- **Documentation** that writes itself
+- **Project planning** that makes sense
+- **Progress reporting** that impresses clients
+- **Business management** that doesn't suck
+
+---
+
+## ✨ Key Features
+
+### 🤖 **AI-Powered Documentation**
+- **Auto-generates docs** from GitHub commits
+- Analyzes code changes line-by-line
+- Creates human-readable explanations
+- Keeps documentation always up-to-date
+
+### 📊 **Smart Progress Reports**
+- **Manual reports** - Generate on-demand for any timeframe
+- **Automatic recurring** - Weekly/monthly reports delivered automatically
+- **Client-friendly translations** - Turn technical commits into business impact
+- **Multiple formats** - Developer, client, and executive versions
+
+### 🎯 **AI Milestone Planning**
+- Describe your big vision (e.g., "Version 2.0 with new UI")
+- AI breaks it down into actionable phases
+- Dependency mapping and time estimates
+- Risk assessment and optimization suggestions
+
+### 🎨 **Complete Project Management**
+- **Branding boards** - Colors, fonts, tone, vision
+- **Infrastructure tracking** - Databases, APIs, services
+- **Legal document generation** - Privacy policies, terms of service
+- **Content hosting** - Technical blogs and documentation sites
+
+### 🎧 **Customer Support System**
+- AI-powered support chatbot
+- Knowledge base integration
+- Automated responses based on your docs
+- Support ticket management
+
+---
+
+## 🏗️ Tech Stack
+
+- **Frontend**: Next.js 15 with TypeScript
+- **Styling**: Tailwind CSS
+- **Authentication**: Clerk
+- **AI Integration**: Gemini for documentation and planning
+- **Database**: Supabse
+---
+
+## 🚀 Getting Started
+
+### Prerequisites
+- Node.js 18+
+- PostgreSQL database
+- GitHub account for integrations
+- OpenAI API key
+
+### Installation
 
 ```bash
+# Clone the repository
+git clone https://github.com/yourusername/fixflow.git
+cd fixflow
+
+# Install dependencies
+npm install
+
+# Set up environment variables
+cp .env.example .env.local
+# Edit .env.local with your configuration
+
+# Set up database
+npx prisma generate
+npx prisma db push
+
+# Start development server
 npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
 ```
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+--- 
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+<!--
+## 🛣️ Roadmap
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+### Phase 1 (MVP) ✅
+- [ ] GitHub integration
+- [ ] Basic AI documentation
+- [x] Project management dashboard
+- [x] User authentication
 
-## Learn More
+### Phase 2 (Current) 🔄
+- [ ] AI milestone planning
+- [ ] Advanced report generation
+- [ ] Customer support system
+- [ ] Legal document generation
 
-To learn more about Next.js, take a look at the following resources:
+### Phase 3 (Future) 📋
+- [ ] Mobile app
+- [ ] Advanced integrations (Vercel, Supabase)
+- [ ] Team collaboration features
+- [ ] Analytics and insights
+-->
+---
 
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
+## 🎯 Target Audience
 
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
+- **Solo developers** building side projects
+- **Indie hackers** launching SaaS products
+- **Small development teams** (2-10 people)
+- **Digital agencies** managing client projects
+- **Freelance developers** who need professional presentation
 
-## Deploy on Vercel
+---
 
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
+<!--
+## 🔗 Links
 
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+- **Website**: [fixflow.dev](https://fixflow.dev) (Coming Soon)
+- **Documentation**: [docs.fixflow.dev](https://docs.fixflow.dev) (Coming Soon)
+- **Twitter**: [@FixFlowApp](https://twitter.com/FixFlowApp) (Coming Soon)
+- **Discord**: [Join our community](https://discord.gg/fixflow) (Coming Soon)
+-->
+---
+
+## 🌟 Why FixFlow?
+
+> "FixFlow isn't just another productivity tool - it's the missing piece that connects your code to your business. Finally, a tool that speaks developer but thinks entrepreneur."
+
+**Built by developers, for developers** who care about more than just code.
+
+---
+<!--
+## 📞 Support
+
+- **Email**: support@fixflow.dev
+- **GitHub Issues**: [Report bugs or request features](https://github.com/yourusername/fixflow/issues)
+- **Discord**: [Join our community](https://discord.gg/fixflow)
+-->
+
+---
+
+**Made with ❤️ by developers who got tired of juggling 10 different tools.**
+
+*FixFlow - Where chaos becomes clarity.*

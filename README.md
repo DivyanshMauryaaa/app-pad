@@ -1,4 +1,4 @@
-# FixFlow 🚀
+# FixFlow 🚀 (in development, not all features are available to use)
 
 **The central control panel for your software business - where code meets clarity.**
 

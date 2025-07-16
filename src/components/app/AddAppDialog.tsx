@@ -24,7 +24,7 @@ const AddAppDialog = () => {
     const { user } = useUser();
 
     const AddApp = async () => {
-        const { error } = await supabase.from('apps')
+        const { error, data } = await supabase.from('apps')
         .insert(
             {
                 name: appName,
@@ -33,7 +33,7 @@ const AddAppDialog = () => {
                 homepage: homePage,
                 github_repo: appRepo
             }
-        )
+        ).select();
 
         if (error) {
             setSuccess('');

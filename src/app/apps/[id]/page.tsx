@@ -11,6 +11,7 @@ import DocumentsPage from './documents/page';
 import DatabasePage from './database/page';
 import Vault from './vault/page';
 import BuildsPage from './builds/page';
+import AppBranding from './brand/page';
 
 export default function Page() {
     const params = useParams();
@@ -93,10 +94,7 @@ export default function Page() {
                         <DatabasePage />
                     </TabsContent>
                     <TabsContent value="brand">
-                        <div>
-                            <h2 className="text-xl font-semibold mb-2 text-foreground">Brand</h2>
-                            <p className="text-muted-foreground">Manage branding for your app.</p>
-                        </div>
+                        <AppBranding />
                     </TabsContent>
                     <TabsContent value="ai">
                         <div>

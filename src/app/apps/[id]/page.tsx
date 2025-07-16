@@ -12,6 +12,7 @@ import DatabasePage from './database/page';
 import Vault from './vault/page';
 import BuildsPage from './builds/page';
 import AppBranding from './brand/page';
+import AiPage from './ai/page';
 
 export default function Page() {
     const params = useParams();
@@ -97,10 +98,7 @@ export default function Page() {
                         <AppBranding />
                     </TabsContent>
                     <TabsContent value="ai">
-                        <div>
-                            <h2 className="text-xl font-semibold mb-2 text-foreground">AI</h2>
-                            <p className="text-muted-foreground">AI features and integrations.</p>
-                        </div>
+                        <AiPage />
                     </TabsContent>
                 </div>
             </Tabs>

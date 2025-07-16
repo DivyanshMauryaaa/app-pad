@@ -41,6 +41,35 @@ const AppBranding = () => {
     const params = useParams();
     const appId = params.id;
 
+    const createBucketIfNotExists = async () => {
+        try {
+            // Try to list files in the bucket (this will fail if bucket doesn't exist)
+            const { error } = await supabase.storage.from('app-assets').list('', { limit: 1 });
+            
+            if (error && error.message.includes('Bucket not found')) {
+                // Create the bucket
+                const { error: createError } = await supabase.storage.createBucket('app-assets', {
+                    public: true,
+                    allowedMimeTypes: ['image/*'],
+                    fileSizeLimit: 5242880 // 5MB limit
+                });
+                
+                if (createError) {
+                    console.error('Error creating bucket:', createError);
+                    toast.error('Failed to create storage bucket');
+                    return false;
+                }
+                console.log('Bucket created successfully');
+                toast.success('Storage bucket created successfully');
+            }
+            return true;
+        } catch (error) {
+            console.error('Error checking/creating bucket:', error);
+            toast.error('Failed to prepare storage');
+            return false;
+        }
+    };
+
     const makeBrand = async () => {
         try {
             const { data, error } = await supabase.from('brand')
@@ -57,23 +86,37 @@ const AppBranding = () => {
 
             if (error) {
                 console.error('Error creating brand:', error);
+                toast.error('Failed to create brand');
                 return;
             }
 
             setBrand(data);
             console.log('Brand created successfully:', data);
+            toast.success('Brand created successfully');
         } catch (error) {
             console.error('Error creating brand:', error);
+            toast.error('Failed to create brand');
         } finally {
             setLoading(false);
         }
     }
 
     const getCurrentApp = async () => {
-        const { data } = await supabase.from('apps').select('*')
-        .eq('id', appId).single();
+        try {
+            const { data, error } = await supabase.from('apps').select('*')
+                .eq('id', appId).single();
 
-        setApp(data);
+            if (error) {
+                console.error('Error fetching app:', error);
+                toast.error('Failed to fetch app details');
+                return;
+            }
+
+            setApp(data);
+        } catch (error) {
+            console.error('Error fetching app:', error);
+            toast.error('Failed to fetch app details');
+        }
     }
 
     const getBranding = async () => {
@@ -90,12 +133,14 @@ const AppBranding = () => {
                     await makeBrand();
                     return;
                 }
+                toast.error('Failed to fetch branding');
                 return;
             }
 
             setBrand(data);
         } catch (error) {
             console.error('Error:', error);
+            toast.error('Failed to fetch branding');
         } finally {
             setLoading(false);
         }
@@ -103,6 +148,12 @@ const AppBranding = () => {
 
     const uploadFile = async (file: File, type: 'logo' | 'banner'): Promise<string | null> => {
         try {
+            // Ensure bucket exists
+            const bucketReady = await createBucketIfNotExists();
+            if (!bucketReady) {
+                return null;
+            }
+
             const fileExt = file.name.split('.').pop();
             const fileName = `${appId}_${type}_${Date.now()}.${fileExt}`;
             const filePath = `branding/${fileName}`;
@@ -116,6 +167,7 @@ const AppBranding = () => {
 
             if (error) {
                 console.error('Upload error:', error);
+                toast.error(`Failed to upload ${type}`);
                 return null;
             }
 
@@ -126,6 +178,7 @@ const AppBranding = () => {
             return publicData.publicUrl;
         } catch (error) {
             console.error('Upload error:', error);
+            toast.error(`Upload failed for ${type}`);
             return null;
         }
     };
@@ -140,16 +193,31 @@ const AppBranding = () => {
 
             // Upload logo if selected
             if (formData.logo_file) {
+                toast.info('Uploading logo...');
                 const uploadedLogoUrl = await uploadFile(formData.logo_file, 'logo');
-                if (uploadedLogoUrl) logoUrl = uploadedLogoUrl;
+                if (uploadedLogoUrl) {
+                    logoUrl = uploadedLogoUrl;
+                    toast.success('Logo uploaded successfully');
+                } else {
+                    toast.error('Failed to upload logo');
+                    return;
+                }
             }
 
             // Upload banner if selected
             if (formData.banner_file) {
+                toast.info('Uploading banner...');
                 const uploadedBannerUrl = await uploadFile(formData.banner_file, 'banner');
-                if (uploadedBannerUrl) bannerUrl = uploadedBannerUrl;
+                if (uploadedBannerUrl) {
+                    bannerUrl = uploadedBannerUrl;
+                    toast.success('Banner uploaded successfully');
+                } else {
+                    toast.error('Failed to upload banner');
+                    return;
+                }
             }
 
+            // Update brand in database
             const { data, error } = await supabase.from('brand')
                 .update({
                     logo_url: logoUrl,
@@ -232,6 +300,9 @@ const AppBranding = () => {
                 <Card>
                     <CardContent className="p-8 text-center">
                         <p className="text-gray-500">No branding found for this app</p>
+                        <Button onClick={makeBrand} className="mt-4">
+                            Create Branding
+                        </Button>
                     </CardContent>
                 </Card>
             </div>

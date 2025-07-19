@@ -14,7 +14,7 @@ import BuildsPage from './builds/page';
 import AppBranding from './brand/page';
 import AiPage from './ai/page';
 import { Card, CardHeader } from '@/components/ui/card';
-import { Bot, Bug, CheckCircle2, FileIcon, GithubIcon, KeyRoundIcon } from 'lucide-react';
+import { ArrowRight, Bot, Bug, CheckCircle2, FileIcon, GithubIcon, KeyRoundIcon } from 'lucide-react';
 import RepoBrowser from '@/app/repo/page';
 import { Button } from '@/components/ui/button';
 
@@ -132,12 +132,21 @@ export default function Page() {
                             </Card>
 
                             <Card
-                                onClick={() => setTab('ai')}
+                                onClick={() => setTab('github')}
                                 className="bg-gradient-to-br w-[300px] from-accent to-card rounded-2xl p-6 border border-border shadow-lg cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl flex flex-col justify-between min-h-[180px]">
-                                <Bot size={48} />
-                                <p className='text-4xl'>AI</p>
+                                <GithubIcon size={48} />
+                                <p className='text-4xl'>Github Repo</p>
                             </Card>
                         </div>
+                        <br />
+                        <Card
+                            className="w-[screen] text-white rounded-xl p-6 border border-border transition-transform  flex flex-col justify-between min-h-[180px]">
+                            <Bot size={48} />
+                            <p className='text-4xl'>AI Features</p>
+                            <p>Use AI features to make your flow efficient & save time!</p>
+                            <Button onClick={() => setTab('ai')} className='flex gap-4 text-center bg-gradient-to-br from-blue-600 to-indigo-800 hover:from-blue-700 hover:to-indigo-900 cursor-pointer w-[10%] p-5 text-white hover:w-[14%] '>AI Features <ArrowRight size={24} /></Button>
+                        </Card>
+
                     </TabsContent>
                     <TabsContent value="todo">
                         <TodoContent />

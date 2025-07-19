@@ -144,9 +144,9 @@ const TodoContent = () => {
             </div>
             <div className="flex gap-4">
                 <div className="w-1/3">
-                    <ul>
+                    <ul className="space-y-3">
                         {lists.map(list => (
-                            <Card key={list.id} onClick={() => {setSelectedList(list.id)}} className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                            <Card key={list.id} onClick={() => {setSelectedList(list.id)}} className="hover:bg-gray-100 dark:hover:bg-gray-900 cursor-pointer">
                                 <CardHeader>
                                     <CardTitle className="text-4xl">{list.name}</CardTitle>
                                     <CardDescription>{list.description}</CardDescription>

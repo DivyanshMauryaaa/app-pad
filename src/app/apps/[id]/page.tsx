@@ -16,6 +16,7 @@ import AiPage from './ai/page';
 import { Card, CardHeader } from '@/components/ui/card';
 import { Bot, Bug, CheckCircle2, FileIcon, GithubIcon, KeyRoundIcon } from 'lucide-react';
 import RepoBrowser from '@/app/repo/page';
+import { Button } from '@/components/ui/button';
 
 export default function Page() {
     const params = useParams();
@@ -24,21 +25,17 @@ export default function Page() {
     const [app, setApp] = useState<any>();
     const [loading, setLoading] = useState(true);
     const [tab, setTab] = useState('home');
-    const [repoInput, setRepoInput] = useState('');
-    const [error, setError] = useState('');
-    const [isConnecting, setIsConnecting] = useState(false);
-    const [repoData, setRepoData] = useState<any>(null);
-    const [repoLoading, setRepoLoading] = useState(false);
-    const [repoError, setRepoError] = useState('');
     const [installationId, setInstallationId] = useState('');
+    const [githubRepo, setGithubRepo] = useState('');
 
     const getAppData = async () => {
         const { data, error } = await supabase.from('apps')
-            .select('*')
+            .select('*, github_repo')
             .eq('id', id)
             .single();
 
         setApp(data);
+        if (data?.github_repo) setGithubRepo(data.github_repo);
         if (error) alert(error.message + error.cause);
 
         setLoading(false);
@@ -60,35 +57,6 @@ export default function Page() {
                 });
         }
     }, [id]);
-
-    useEffect(() => {
-        // Set the repo input if already connected
-        if (app?.github_repo) {
-            setRepoInput(app.github_repo);
-        }
-    }, [app]);
-
-    useEffect(() => {
-        if (app?.github_repo) {
-            setRepoLoading(true);
-            setRepoError('');
-            const [owner, repo] = app.github_repo.split('/');
-            fetch(`/api/github/repo?owner=${owner}&repo=${repo}`)
-                .then(res => res.json())
-                .then(data => {
-                    if (data.error) {
-                        setRepoError(data.error);
-                        setRepoData(null);
-                    } else {
-                        setRepoData(data);
-                    }
-                })
-                .catch(() => setRepoError('Failed to fetch repo data.'))
-                .finally(() => setRepoLoading(false));
-        } else {
-            setRepoData(null);
-        }
-    }, [app?.github_repo]);
 
     if (loading) {
         return (
@@ -202,19 +170,18 @@ export default function Page() {
                                 <p className="mb-2 text-yellow-800 font-semibold">
                                     To use GitHub integration, you must install the GitHub App on your account.
                                 </p>
-                                <button
-                                    className="bg-black text-white px-6 py-2 rounded font-semibold hover:bg-gray-900 transition"
+                                <Button
                                     onClick={() => window.open(`https://github.com/apps/pulsepatch/installations/new?state=${id}`, '_blank')}
                                 >
                                     Install GitHub App
-                                </button>
+                                </Button>
                                 <p className="mt-2 text-sm text-yellow-700">
                                     After installing, please refresh this page.
                                 </p>
                             </div>
                         )}
                         {/* Repo browser only if installationId is present */}
-                        {installationId && <RepoBrowser installationId={installationId} />}
+                        {installationId && <RepoBrowser installationId={installationId} githubRepo={githubRepo} app={app} />}
                     </TabsContent>
                 </div>
             </Tabs>

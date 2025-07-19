@@ -146,21 +146,12 @@ const TodoContent = () => {
                 <div className="w-1/3">
                     <ul>
                         {lists.map(list => (
-                            <li
-                                key={list.id}
-                                className={`p-2 rounded cursor-pointer mb-2 transition-colors ${selectedList === list.id ? 'bg-muted' : 'bg-card'} flex justify-between items-center`}
-                                onClick={() => setSelectedList(list.id)}
-                            >
-                                <p className="text-xl">{list.name}</p>
-                                <Button
-                                    variant="secondary"
-                                    size="sm"
-                                    className="ml-2 cursor-pointer hover:text-red-600"
-                                    onClick={e => { e.stopPropagation(); deleteList(list.id); }}
-                                >
-                                    <Trash2 />
-                                </Button>
-                            </li>
+                            <Card key={list.id} onClick={() => {setSelectedList(list.id)}} className="hover:bg-gray-100 dark:hover:bg-gray-700 cursor-pointer">
+                                <CardHeader>
+                                    <CardTitle className="text-4xl">{list.name}</CardTitle>
+                                    <CardDescription>{list.description}</CardDescription>
+                                </CardHeader>
+                            </Card>
                         ))}
                     </ul>
                 </div>

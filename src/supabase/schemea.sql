@@ -9,7 +9,8 @@ CREATE TABLE apps (
     homepage TEXT,
     github_repo TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    github_access_token TEXT
 );
 
 -- Documents table

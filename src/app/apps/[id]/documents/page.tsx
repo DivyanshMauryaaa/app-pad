@@ -15,10 +15,11 @@ import rehypeHighlight from "rehype-highlight";
 import rehypeSlug from "rehype-slug";
 import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import "highlight.js/styles/github-dark.css"; // or another highlight.js theme
-import { ArrowLeftCircleIcon, Copy, Eye, SaveIcon, Trash2 } from 'lucide-react';
+import { ArrowLeftCircleIcon, Copy, Eye, FileIcon, SaveIcon, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 // import { AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
+import { Card, CardDescription, CardHeader } from '@/components/ui/card';
 
 const DocumentsPage = () => {
     const params = useParams();
@@ -139,49 +140,51 @@ const DocumentsPage = () => {
                 {loading ? (
                     <div className="text-muted-foreground">Loading...</div>
                 ) : (
-                    <ul className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {documents.map(doc => (
-                            <li
+                            <Card
                                 key={doc.id}
-                                className="bg-card rounded-lg p-4 border border-border shadow cursor-pointer"
+                                className="bg-gradient-to-br from-accent to-card rounded-2xl p-6 border border-border shadow-lg cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl flex flex-col justify-between min-h-[180px]"
                             >
-                                <div className="font-semibold text-lg text-foreground hover:underline"
-                                    onClick={() => openDoc(doc.id)}
-                                >{doc.name}</div>
-                                <div className="text-muted-foreground text-sm whitespace-pre-line mt-2 line-clamp-2">{doc.content}</div>
-
-
-                                <AlertDialog>
-                                    <AlertDialogTrigger asChild>
-                                        <Button variant="outline" className='hover:text-white hover:bg-red-600 flex gap-2'><Trash2 /> Delete</Button>
-                                    </AlertDialogTrigger>
-                                    <AlertDialogContent>
-                                        <AlertDialogHeader>
-                                            <AlertDialogTitle>Are you sure to delete this document?</AlertDialogTitle>
-                                            <AlertDialogDescription>
-                                                This action cannot be undone. This will permanently delete your account
-                                                and remove your data from our servers.
-                                            </AlertDialogDescription>
-                                        </AlertDialogHeader>
-                                        <AlertDialogFooter>
-                                            <AlertDialogAction>Cancel</AlertDialogAction>
-                                            <AlertDialogAction
-                                                onClick={async () => {
-                                                    await supabase.from('documents').delete().eq('id', doc.id);
-                                                    toast("Deleted Document Successfuly")
-                                                    pullDocsfromdb();
-                                                }}
-                                            >Continue</AlertDialogAction>
-                                        </AlertDialogFooter>
-                                    </AlertDialogContent>
-                                </AlertDialog>
-
-
-
-
-                            </li>
+                                <div onClick={() => openDoc(doc.id)} className="flex-1">
+                                    <CardHeader className="font-bold text-4xl flex gap-4 flex-col text-foreground mb-2 hover:underline truncate">
+                                        <FileIcon />
+                                        {doc.name}
+                                    </CardHeader>
+                                    {/* <CardDescription className="text-muted-foreground text-base whitespace-pre-line mt-2 line-clamp-3">
+                                        {doc.content}
+                                    </CardDescription>
+                                     */}
+                                </div>
+                                <div className="mt-4 flex justify-end">
+                                    <AlertDialog>
+                                        <AlertDialogTrigger asChild>
+                                            <Button variant="outline" className='hover:text-white hover:bg-red-600 flex gap-2'><Trash2 /> Delete</Button>
+                                        </AlertDialogTrigger>
+                                        <AlertDialogContent>
+                                            <AlertDialogHeader>
+                                                <AlertDialogTitle>Are you sure to delete this document?</AlertDialogTitle>
+                                                <AlertDialogDescription>
+                                                    This action cannot be undone. This will permanently delete your account
+                                                    and remove your data from our servers.
+                                                </AlertDialogDescription>
+                                            </AlertDialogHeader>
+                                            <AlertDialogFooter>
+                                                <AlertDialogAction>Cancel</AlertDialogAction>
+                                                <AlertDialogAction
+                                                    onClick={async () => {
+                                                        await supabase.from('documents').delete().eq('id', doc.id);
+                                                        toast("Deleted Document Successfuly")
+                                                        pullDocsfromdb();
+                                                    }}
+                                                >Continue</AlertDialogAction>
+                                            </AlertDialogFooter>
+                                        </AlertDialogContent>
+                                    </AlertDialog>
+                                </div>
+                            </Card>
                         ))}
-                    </ul>
+                    </div>
                 )}
             </div>
 
@@ -302,7 +305,7 @@ const DocumentsPage = () => {
                             <Textarea
                                 value={viewDoc?.content}
                                 onChange={e => setViewDoc({ ...viewDoc, content: e.target.value })}
-                                className="flex-1 mb-4 w-[80%] m-auto"
+                                className="flex-1 mb-4 w-[80%] m-auto font-mono"
                                 rows={16}
                             />
 

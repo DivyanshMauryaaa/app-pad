@@ -9,7 +9,7 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
-import { Pencil, Trash2 } from "lucide-react";
+import { Pencil, Trash2, Bug, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
 
 const BugsPage = () => {
@@ -223,35 +223,37 @@ const BugsPage = () => {
                 {loading ? (
                     <div className="text-muted-foreground">Loading...</div>
                 ) : (
-                    <ul className="space-y-4">
+                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
                         {bugs.map(bug => (
-                            <li key={bug.id} className="bg-card rounded-lg p-4 border border-border shadow">
-                                <div className="flex justify-between items-center">
-                                    <div>
-                                        <div className="flex items-center gap-2">
-                                            <Checkbox
-                                                checked={!!bug.resolved}
-                                                onCheckedChange={async (checked) => {
-                                                    await supabase.from('bugs').update({ resolved: checked }).eq('id', bug.id);
-                                                    getBugs();
-                                                }}
-                                                aria-label={bug.resolved ? "Mark as unresolved" : "Mark as resolved"}
-                                            />
-                                            <span className={`font-semibold text-lg ${bug.resolved ? "line-through text-muted-foreground" : ""}`}>
-                                                {bug.name}
-                                            </span>
-                                        </div>
-                                        <div className="text-muted-foreground text-sm">{bug.description}</div>
-                                        {bug.link && (
-                                            <a href={bug.link} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline text-xs">
-                                                {bug.link}
-                                            </a>
-                                        )}
-                                        {bug.resolved && (
-                                            <p className="text-green-700">Resolved!</p>
-                                        )}
-                                    </div>
+                            <div key={bug.id} className="bg-gradient-to-br from-accent to-card rounded-2xl p-6 border border-border shadow-lg transition-transform hover:scale-105 hover:shadow-2xl flex flex-col justify-between min-h-[180px]">
+                                <div className="flex items-center gap-3 mb-2">
+                                    {/* Icon based on severity */}
+                                    {bug.severity?.toLowerCase() === "critical" ? (
+                                        <AlertTriangle className="text-red-700 w-7 h-7" />
+                                    ) : (
+                                        <Bug className="text-yellow-600 w-7 h-7" />
+                                    )}
+                                    <span className={`font-bold text-2xl truncate ${bug.resolved ? "line-through text-muted-foreground" : "text-foreground"}`}>{bug.name}</span>
+                                </div>
+                                <div className="text-muted-foreground text-base mb-2 line-clamp-3">{bug.description}</div>
+                                {bug.link && (
+                                    <a href={bug.link} target="_blank" rel="noopener noreferrer" className="text-blue-400 underline text-xs mb-2 block">
+                                        {bug.link}
+                                    </a>
+                                )}
+                                {bug.resolved && (
+                                    <p className="text-green-700 font-semibold">Resolved!</p>
+                                )}
+                                <div className="flex items-center justify-between mt-4">
                                     <div className="flex items-center gap-2">
+                                        <Checkbox
+                                            checked={!!bug.resolved}
+                                            onCheckedChange={async (checked) => {
+                                                await supabase.from('bugs').update({ resolved: checked }).eq('id', bug.id);
+                                                getBugs();
+                                            }}
+                                            aria-label={bug.resolved ? "Mark as unresolved" : "Mark as resolved"}
+                                        />
                                         <span className={`px-2 py-1 rounded text-sm ${bug.severity?.toLowerCase() === "critical" ? "bg-red-700 text-white" :
                                                 bug.severity?.toLowerCase() === "high" ? "bg-red-500 text-white" :
                                                 bug.severity?.toLowerCase() === "medium" ? "bg-yellow-600 text-white" :
@@ -259,13 +261,15 @@ const BugsPage = () => {
                                             }`}>
                                             {bug.severity}
                                         </span>
+                                    </div>
+                                    <div className="flex items-center gap-2">
                                         <EditBugDialog bug={bug} onUpdated={getBugs} />
                                         <DeleteBugDialog bugId={bug.id} onDeleted={getBugs} />
                                     </div>
                                 </div>
-                            </li>
+                            </div>
                         ))}
-                    </ul>
+                    </div>
                 )}
             </div>
         </div>

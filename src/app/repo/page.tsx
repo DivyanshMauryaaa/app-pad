@@ -58,7 +58,7 @@ export default function RepoBrowser({ installationId = '', githubRepo = '', app 
   return (
     <Card className="w-[screen] mx-auto mt-10 p-8 rounded-lg border shadow bg-card">
       <CardHeader>
-        <CardTitle className="text-3xl">GitHub Repo Browser</CardTitle>
+        <CardTitle className="text-3xl">GitHub Repo</CardTitle>
       </CardHeader>
       <Separator />
       <CardContent className="pt-6">

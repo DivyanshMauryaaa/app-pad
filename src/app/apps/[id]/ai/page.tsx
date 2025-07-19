@@ -12,6 +12,7 @@ import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
 import { Plus, Save, Loader2, ListChecks } from "lucide-react";
 import { toast } from "sonner";
+import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 
 type TodoList = {
   id: string;
@@ -38,7 +39,7 @@ const AiPage = () => {
   const params = useParams();
   const appId = params.id as string;
   const { user } = useUser();
-  
+
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [todoLists, setTodoLists] = useState<TodoList[]>([]);
@@ -69,7 +70,7 @@ const AiPage = () => {
     }
 
     setTodoLists(data || []);
-    
+
     if (data && data.length > 0) {
       const todosData: Record<string, Todo[]> = {};
       for (const list of data) {
@@ -116,7 +117,7 @@ const AiPage = () => {
       }
 
       const data = await response.json();
-      
+
       // Extract the generated content
       const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
       if (!generatedText) {
@@ -153,7 +154,7 @@ const AiPage = () => {
       // Create a new list with the prompt as the name
       setNewListName(`Feature: ${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}`);
       setNewListDescription(prompt);
-      
+
       // Set the generated todos in state
       setGeneratedTodos(parsedTodos.map(todo => ({
         name: todo.name || 'Unnamed task',
@@ -243,7 +244,7 @@ const AiPage = () => {
       // Update local state
       setTodos(prev => ({
         ...prev,
-        [listId]: prev[listId].map(todo => 
+        [listId]: prev[listId].map(todo =>
           todo.id === todoId ? { ...todo, status, updated_at: new Date().toISOString() } : todo
         )
       }));
@@ -255,160 +256,207 @@ const AiPage = () => {
 
   return (
     <div className="container mx-auto py-8">
-      <h1 className="text-3xl font-bold mb-6">AI Todo Generator</h1>
-      
-      <Card className="mb-8">
-        <CardHeader>
-          <CardTitle>Generate Development Tasks</CardTitle>
-          <CardDescription>
-            Describe a feature you want to implement and we'll break it down into actionable tasks.
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            <Textarea
-              value={prompt}
-              onChange={(e) => setPrompt(e.target.value)}
-              placeholder="Describe the feature you want to implement (e.g., 'Add user authentication with email/password and Google login')"
-              rows={4}
-            />
-            <Button onClick={generateTodos} disabled={isGenerating}>
-              {isGenerating ? (
-                <>
-                  <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                  Generating...
-                </>
-              ) : (
-                <>
-                  <ListChecks className="mr-2 h-4 w-4" />
-                  Generate Tasks
-                </>
-              )}
-            </Button>
-          </div>
-        </CardContent>
-      </Card>
+      <h1 className="text-3xl font-bold mb-6">AI Features</h1>
+      <Tabs defaultValue="todo-gen" className="w-full">
+        <TabsList className="mb-6">
+          <TabsTrigger value="todo-gen">Todo Generator</TabsTrigger>
+          <TabsTrigger value="document-gen">Document Generator</TabsTrigger>
+          <TabsTrigger value="bug-gen">Bug Reporter</TabsTrigger>
+          <TabsTrigger value="code-review">Code Review</TabsTrigger>
+          <TabsTrigger value="pulseai-chat">PulseAI Chat</TabsTrigger>
 
-      {(generatedTodos.length > 0 || selectedListId) && (
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {generatedTodos.length > 0 ? "Generated Tasks" : "Todo List"}
-            </CardTitle>
-            <CardDescription>
-              {generatedTodos.length > 0 
-                ? "Review and save these tasks to your project"
-                : "Manage your todo items"}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            {generatedTodos.length > 0 ? (
-              <div className="space-y-6">
-                <div className="space-y-2">
-                  <Label htmlFor="list-name">List Name</Label>
-                  <Input
-                    id="list-name"
-                    value={newListName}
-                    onChange={(e) => setNewListName(e.target.value)}
-                    placeholder="Enter a name for this list"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="list-description">Description</Label>
-                  <Textarea
-                    id="list-description"
-                    value={newListDescription}
-                    onChange={(e) => setNewListDescription(e.target.value)}
-                    placeholder="Enter a description for this list"
-                    rows={2}
-                  />
-                </div>
-                <div className="space-y-4">
-                  <h3 className="font-medium">Tasks</h3>
-                  <div className="space-y-3">
-                    {generatedTodos.map((todo, index) => (
-                      <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
-                        <Checkbox checked={todo.status === 'completed'} />
-                        <div className="flex-1">
-                          <p className="font-medium">{todo.name}</p>
-                          {todo.description && (
-                            <p className="text-sm text-muted-foreground">{todo.description}</p>
-                          )}
-                        </div>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-                <Button onClick={saveTodoList} disabled={isSaving}>
-                  {isSaving ? (
+        </TabsList>
+        <TabsContent value="todo-gen">
+          {/* Todo Generator UI START */}
+          <Card className="mb-8">
+            <CardHeader>
+              <CardTitle>Generate Development Tasks</CardTitle>
+              <CardDescription>
+                Describe a feature you want to implement and we'll break it down into actionable tasks.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Textarea
+                  value={prompt}
+                  onChange={(e) => setPrompt(e.target.value)}
+                  placeholder="Describe the feature you want to implement (e.g., 'Add user authentication with email/password and Google login')"
+                  rows={4}
+                />
+                <Button onClick={generateTodos} disabled={isGenerating}>
+                  {isGenerating ? (
                     <>
                       <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Saving...
+                      Generating...
                     </>
                   ) : (
                     <>
-                      <Save className="mr-2 h-4 w-4" />
-                      Save Todo List
+                      <ListChecks className="mr-2 h-4 w-4" />
+                      Generate Tasks
                     </>
                   )}
                 </Button>
               </div>
-            ) : selectedListId && todos[selectedListId] ? (
-              <div className="space-y-4">
-                <div className="space-y-3">
-                  {todos[selectedListId].map((todo) => (
-                    <div key={todo.id} className="flex items-start gap-3 p-3 border rounded-lg">
-                      <Checkbox 
-                        checked={todo.status === 'completed'} 
-                        onCheckedChange={(checked) => 
-                          updateTodoStatus(
-                            selectedListId, 
-                            todo.id, 
-                            checked ? 'completed' : 'pending'
-                          )
-                        }
+            </CardContent>
+          </Card>
+
+          {(generatedTodos.length > 0 || selectedListId) && (
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {generatedTodos.length > 0 ? "Generated Tasks" : "Todo List"}
+                </CardTitle>
+                <CardDescription>
+                  {generatedTodos.length > 0
+                    ? "Review and save these tasks to your project"
+                    : "Manage your todo items"}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                {generatedTodos.length > 0 ? (
+                  <div className="space-y-6">
+                    <div className="space-y-2">
+                      <Label htmlFor="list-name">List Name</Label>
+                      <Input
+                        id="list-name"
+                        value={newListName}
+                        onChange={(e) => setNewListName(e.target.value)}
+                        placeholder="Enter a name for this list"
                       />
-                      <div className="flex-1">
-                        <p className="font-medium">{todo.name}</p>
-                        {todo.description && (
-                          <p className="text-sm text-muted-foreground">{todo.description}</p>
-                        )}
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="list-description">Description</Label>
+                      <Textarea
+                        id="list-description"
+                        value={newListDescription}
+                        onChange={(e) => setNewListDescription(e.target.value)}
+                        placeholder="Enter a description for this list"
+                        rows={2}
+                      />
+                    </div>
+                    <div className="space-y-4">
+                      <h3 className="font-medium">Tasks</h3>
+                      <div className="space-y-3">
+                        {generatedTodos.map((todo, index) => (
+                          <div key={index} className="flex items-start gap-3 p-3 border rounded-lg">
+                            <Checkbox checked={todo.status === 'completed'} />
+                            <div className="flex-1">
+                              <p className="font-medium">{todo.name}</p>
+                              {todo.description && (
+                                <p className="text-sm text-muted-foreground">{todo.description}</p>
+                              )}
+                            </div>
+                          </div>
+                        ))}
                       </div>
                     </div>
-                  ))}
-                </div>
-              </div>
-            ) : null}
-          </CardContent>
-        </Card>
-      )}
+                    <Button onClick={saveTodoList} disabled={isSaving}>
+                      {isSaving ? (
+                        <>
+                          <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                          Saving...
+                        </>
+                      ) : (
+                        <>
+                          <Save className="mr-2 h-4 w-4" />
+                          Save Todo List
+                        </>
+                      )}
+                    </Button>
+                  </div>
+                ) : selectedListId && todos[selectedListId] ? (
+                  <div className="space-y-4">
+                    <div className="space-y-3">
+                      {todos[selectedListId].map((todo) => (
+                        <div key={todo.id} className="flex items-start gap-3 p-3 border rounded-lg">
+                          <Checkbox
+                            checked={todo.status === 'completed'}
+                            onCheckedChange={(checked) =>
+                              updateTodoStatus(
+                                selectedListId,
+                                todo.id,
+                                checked ? 'completed' : 'pending'
+                              )
+                            }
+                          />
+                          <div className="flex-1">
+                            <p className="font-medium">{todo.name}</p>
+                            {todo.description && (
+                              <p className="text-sm text-muted-foreground">{todo.description}</p>
+                            )}
+                          </div>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                ) : null}
+              </CardContent>
+            </Card>
+          )}
 
-      {todoLists.length > 0 && (
-        <div className="mt-8">
-          <h2 className="text-xl font-semibold mb-4">Your Todo Lists</h2>
-          <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-            {todoLists.map((list) => (
-              <Card 
-                key={list.id} 
-                className={`cursor-pointer hover:bg-accent ${selectedListId === list.id ? 'border-primary' : ''}`}
-                onClick={() => setSelectedListId(list.id)}
-              >
-                <CardHeader>
-                  <CardTitle>{list.name}</CardTitle>
-                  <CardDescription>
-                    {list.description || 'No description'}
-                  </CardDescription>
-                </CardHeader>
-                <CardContent>
-                  <p className="text-sm text-muted-foreground">
-                    {todos[list.id]?.length || 0} tasks
-                  </p>
-                </CardContent>
-              </Card>
-            ))}
-          </div>
-        </div>
-      )}
+          {todoLists.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">Your Todo Lists</h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {todoLists.map((list) => (
+                  <Card
+                    key={list.id}
+                    className={`cursor-pointer hover:bg-accent ${selectedListId === list.id ? 'border-primary' : ''}`}
+                    onClick={() => setSelectedListId(list.id)}
+                  >
+                    <CardHeader>
+                      <CardTitle>{list.name}</CardTitle>
+                      <CardDescription>
+                        {list.description || 'No description'}
+                      </CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <p className="text-sm text-muted-foreground">
+                        {todos[list.id]?.length || 0} tasks
+                      </p>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
+          {/* Todo Generator UI END */}
+        </TabsContent>
+        <TabsContent value="document-gen">
+          <Card>
+            <CardHeader>
+              <CardTitle>More AI Agents Coming Soon</CardTitle>
+              <CardDescription>
+                This space is reserved for future AI features, such as bug suggestion, code review, and more.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <p className="text-muted-foreground">Stay tuned for more AI-powered tools to boost your productivity!</p>
+            </CardContent>
+          </Card>
+        </TabsContent>
+        <TabsContent value="bug-gen">
+          <Card>
+            <CardHeader>
+              <CardTitle>Bug Reporter</CardTitle>
+            </CardHeader>
+          </Card>
+        </TabsContent>
+        <TabsContent value="code-review">
+          <Card>
+            <CardHeader>
+              <CardTitle>Code Review</CardTitle>
+            </CardHeader>
+          </Card>
+        </TabsContent>
+        <TabsContent value="pulseai-chat">
+          <Card>
+            <CardHeader>
+              <CardTitle>PulseAI Chat</CardTitle>
+            </CardHeader>
+          </Card>
+        </TabsContent>
+      </Tabs>
     </div>
   );
 };

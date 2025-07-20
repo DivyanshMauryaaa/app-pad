@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge';
 import { Separator } from '@/components/ui/separator';
 import { Folder, FileText } from 'lucide-react';
 import { toast } from 'sonner';
+import supabase from '@/supabase/client';
 
 interface RepoBrowserProps {
   installationId?: string;
@@ -35,7 +36,7 @@ export default function RepoBrowser({ installationId = '', githubRepo = '', app 
 
   const { contents, loading, error } = useRepoData({ owner, repo, installationId, path });
 
-  const handleBrowse = () => {
+  const handleBrowse = async () => {
     setInputError('');
     const parts = repoInput.split('/');
     if (parts.length !== 2) {
@@ -46,6 +47,13 @@ export default function RepoBrowser({ installationId = '', githubRepo = '', app 
       setInputError('No installation ID found for this app.');
       return;
     }
+
+    const { error } = await supabase.from('apps').update({ github_repo: `${parts[0]}/${parts[1]}` }).eq('id', app.id).single();
+    if (error) {
+      setInputError('Error updating app');
+      return;
+    }
+
     setOwner(parts[0]);
     setRepo(parts[1]);
     setPath('');
@@ -80,8 +88,8 @@ export default function RepoBrowser({ installationId = '', githubRepo = '', app 
             <span className="font-semibold">Repo:</span> <Badge onClick={() => { navigator.clipboard.writeText(`${owner}/${repo}`); toast.success('Copied to clipboard') }} className='cursor-pointer'>{owner}/{repo}</Badge>
             {path && <span> / {path}</span>}
             {path && (
-              <Button variant="ghost" size="sm" className="ml-2 px-2 py-0.5 h-7" onClick={() => setPath('')}>
-                Root
+              <Button variant="secondary" size="sm" className="ml-2 px-2 py-0.5 h-7" onClick={() => setPath('')}>
+                Go Root /
               </Button>
             )}
           </div>

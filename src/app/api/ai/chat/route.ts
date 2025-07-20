@@ -1,8 +1,11 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Octokit } from 'octokit';
+import { createAppAuth } from '@octokit/auth-app';
+import { fetchAllRepoFilesWithContent } from '@/lib/github';
 
 export async function POST(req: NextRequest) {
   try {
-    const { message, history, owner, repo, installationId, app_id, user_id } = await req.json();
+    const { message, history, owner, repo, installationId, app_id, user_id, repoContext } = await req.json();
     if (!message || typeof message !== 'string') {
       return NextResponse.json({ error: 'Missing or invalid message' }, { status: 400 });
     }
@@ -13,17 +16,46 @@ export async function POST(req: NextRequest) {
       chatContext = history.map((msg: any) => `${msg.role === 'user' ? 'User' : 'Assistant'}: ${msg.content}`).join('\n');
     }
 
-    // Add repo context
-    let repoContext = '';
-    if (owner && repo) {
-      repoContext = `\nRepository: ${owner}/${repo}`;
-      if (installationId) repoContext += `\nInstallation ID: ${installationId}`;
-      if (app_id) repoContext += `\nApp ID: ${app_id}`;
-      if (user_id) repoContext += `\nUser ID: ${user_id}`;
+    // Detect if this is the first user prompt
+    const isFirstPrompt = !history || history.length === 0;
+
+    // Use repoContext from client, fallback to empty string
+    const repoContextStr = typeof repoContext === 'string' ? repoContext : '';
+
+    // Fetch repo content if possible (only for first prompt)
+    let repoFiles: { path: string; content: string }[] = [];
+    if (isFirstPrompt && owner && repo && installationId) {
+      const appId = process.env.GITHUB_APP_ID;
+      const privateKey = process.env.GITHUB_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const octokit = new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+          appId: appId!,
+          privateKey: privateKey!,
+          installationId: installationId!,
+        },
+      });
+      try {
+        repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo });
+        if (repoFiles.length > 40) repoFiles = repoFiles.slice(0, 40);
+      } catch (e) {
+        repoFiles = [];
+      }
     }
 
     // Compose the prompt
-    const prompt = `${repoContext}\n${chatContext}\nUser: ${message}`;
+    let prompt = '';
+    if (isFirstPrompt) {
+      prompt = `${repoContextStr}\n${chatContext}\nUser: ${message}\n\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => {
+        // Limit to first 2000 lines per file
+        const lines = f.content.split(/\r?\n/).slice(0, 2000).join('\n');
+        return `File: ${f.path}\n${lines}`;
+      }).join('\n---\n')}`;
+    } else {
+      prompt = `${chatContext}\nUser: ${message}`;
+    }
+
+    // if () {}
 
     // Call Gemini API
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {

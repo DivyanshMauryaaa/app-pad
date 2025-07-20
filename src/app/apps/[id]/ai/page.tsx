@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from "react";
+import { useState, useEffect, useRef } from "react";
 import supabase from "@/supabase/client";
 import { useParams } from "next/navigation";
 import { useUser } from "@clerk/nextjs";
@@ -10,9 +10,9 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+// import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
 import { Badge } from "@/components/ui/badge";
-import { Plus, Save, Loader2, ListChecks, FileText, Bug, Code, MessageCircle, Download, Copy, ExternalLink } from "lucide-react";
+import { Save, Loader2, ListChecks, FileText, Bug, Code, MessageCircle, Download, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import MdRenderer from '@/components/mdrenderer';
@@ -91,6 +91,11 @@ const AiPage = () => {
   const [path, setPath] = useState('');
   const [owner, setOwner] = useState('');
   const [repo, setRepo] = useState('');
+  // Prepare repo context for AI endpoints
+  const repoContext = `\nRepository: ${owner}/${repo}` +
+    (installationId ? `\nInstallation ID: ${installationId}` : '') +
+    (appId ? `\nApp ID: ${appId}` : '') +
+    (user?.id ? `\nUser ID: ${user.id}` : '');
 
   // Todo Generator state
   const [prompt, setPrompt] = useState("");
@@ -128,6 +133,14 @@ const AiPage = () => {
   const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
   const [chatInput, setChatInput] = useState("");
   const [isChatLoading, setIsChatLoading] = useState(false);
+  const chatEndRef = useRef<HTMLDivElement | null>(null);
+
+  // Auto-scroll to bottom when chatMessages change
+  useEffect(() => {
+    if (chatEndRef.current) {
+      chatEndRef.current.scrollIntoView({ behavior: "smooth" });
+    }
+  }, [chatMessages, isChatLoading]);
 
   useEffect(() => {
     const fetchRepoData = async () => {
@@ -414,7 +427,10 @@ const AiPage = () => {
         body: JSON.stringify({
           code: reviewCode,
           file_path: reviewFilePath,
-          ...repoParams,
+          repoContext,
+          owner,
+          repo,
+          installationId,
           app_id: appId,
           user_id: user?.id || null
         })
@@ -479,7 +495,10 @@ const AiPage = () => {
         body: JSON.stringify({
           message: chatInput,
           history: chatMessages,
-          ...repoParams,
+          repoContext,
+          owner,
+          repo,
+          installationId,
           app_id: appId,
           user_id: user?.id || null
         })
@@ -1075,15 +1094,16 @@ const AiPage = () => {
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <div className="flex flex-col h-[calc(100vh-400px)]">
-                <div className="flex-1 overflow-y-auto pr-4 mb-4">
+              <div className="flex flex-col h-[500px] max-h-[70vh] relative">
+                {/* Chat messages area */}
+                <div className="flex-1 overflow-y-auto pr-4 mb-2" style={{ minHeight: 0 }}>
                   {chatMessages.map((msg) => (
-                    <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`p-3 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-muted'}`}>
+                    <div key={msg.id} className={`flex border-none shadow-none ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`p-3 rounded-lg ${msg.role === 'user' ? 'bg-primary text-white' : ''}`}> 
                         {msg.role === 'assistant' ? (
                           <MdRenderer content={msg.content} />
                         ) : (
-                          <p>{msg.content}</p>
+                          <p className="dark:text-black text-white">{msg.content}</p>
                         )}
                         <div className="text-xs text-muted-foreground mt-1">
                           {new Date(msg.timestamp).toLocaleTimeString()}
@@ -1098,19 +1118,24 @@ const AiPage = () => {
                       </div>
                     </div>
                   )}
+                  <div ref={chatEndRef} />
                 </div>
-                <div className="flex gap-2">
-                  <Input
+                {/* Fixed input box */}
+                <div className="flex gap-2 w-full absolute left-0 right-0 bottom-0 bg-background p-2 border-t z-10">
+                  <Textarea
                     value={chatInput}
                     onChange={(e) => setChatInput(e.target.value)}
-                    onKeyPress={(e) => {
-                      if (e.key === 'Enter') {
+                    onKeyDown={(e) => {
+                      if (e.key === 'Enter' && !e.shiftKey) {
+                        e.preventDefault();
                         sendChatMessage();
                       }
                     }}
                     placeholder="Ask PulseAI a question..."
+                    rows={1}
+                    className="resize-none flex-1 min-h-[40px] max-h-[120px]"
                   />
-                  <Button onClick={sendChatMessage} disabled={isChatLoading}>
+                  <Button onClick={sendChatMessage} disabled={isChatLoading || !chatInput.trim()} className="h-[40px]">
                     {isChatLoading ? (
                       <Loader2 className="h-4 w-4 animate-spin" />
                     ) : (

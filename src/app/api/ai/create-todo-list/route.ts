@@ -1,4 +1,7 @@
+import { fetchAllRepoFilesWithContent } from '@/lib/github';
+import { createAppAuth } from '@octokit/auth-app';
 import { NextRequest, NextResponse } from 'next/server';
+import { Octokit } from 'octokit';
 
 // This endpoint expects a POST request with a JSON body containing a 'prompt' string and repo parameters.
 // It returns a generated todo list as an array of tasks with name and description.
@@ -10,7 +13,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing or invalid prompt' }, { status: 400 });
     }
 
-    // Add repo context to the AI prompt
+    // Add repo context
     let repoContext = '';
     if (owner && repo) {
       repoContext = `\nRepository: ${owner}/${repo}`;
@@ -18,6 +21,35 @@ export async function POST(req: NextRequest) {
       if (app_id) repoContext += `\nApp ID: ${app_id}`;
       if (user_id) repoContext += `\nUser ID: ${user_id}`;
     }
+
+    // Fetch repo content if possible
+    let repoFiles: { path: string; content: string }[] = [];
+    if (owner && repo && installationId) {
+      const appId = process.env.GITHUB_APP_ID;
+      const privateKey = process.env.GITHUB_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const octokit = new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+          appId: appId!,
+          privateKey: privateKey!,
+          installationId: installationId!,
+        },
+      });
+      try {
+        repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo });
+        if (repoFiles.length > 40) repoFiles = repoFiles.slice(0, 40);
+      } catch (e) {
+        repoFiles = [];
+      }
+    }
+
+    // Compose the prompt
+    const Newprompt = `${repoContext}\n${prompt}\n\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => {
+      // Limit to first 2000 lines per file
+      const lines = f.content.split(/\r?\n/).slice(0, 2000).join('\n');
+      return `File: ${f.path}\n${lines}`;
+    }).join('\n---\n')}`;
+
 
     // Call Google AI Studio API (Gemini)
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
@@ -29,7 +61,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Break down the following software feature into specific development tasks as a JSON array of objects with \"name\" and \"description\" properties. Each task should be actionable for a developer. Be concise but clear. Feature: ${prompt}${repoContext}`
+            text: `Break down the following software feature into specific development tasks as a JSON array of objects with \"name\" and \"description\" properties. Each task should be actionable for a developer. Be concise but clear. Feature: ${Newprompt}${repoContext}`
           }]
         }]
       })

@@ -1,24 +1,60 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Octokit } from 'octokit';
+import { createAppAuth } from '@octokit/auth-app';
+import { fetchAllRepoFilesWithContent } from '@/lib/github';
 
 export async function POST(req: NextRequest) {
   try {
-    const { code, file_path, owner, repo, installationId, app_id, user_id } = await req.json();
+    const { code, file_path, owner, repo, installationId, app_id, user_id, repoContext } = await req.json();
     if (!code || typeof code !== 'string') {
       return NextResponse.json({ error: 'Missing or invalid code' }, { status: 400 });
-    }
+    }    
 
-    // Add repo context
-    let repoContext = '';
-    if (owner && repo) {
-      repoContext = `\nRepository: ${owner}/${repo}`;
-      if (file_path) repoContext += `\nFile: ${file_path}`;
-      if (installationId) repoContext += `\nInstallation ID: ${installationId}`;
-      if (app_id) repoContext += `\nApp ID: ${app_id}`;
-      if (user_id) repoContext += `\nUser ID: ${user_id}`;
+    // Use repoContext from client, fallback to empty string
+    const repoContextStr = typeof repoContext === 'string' ? repoContext : '';
+
+    // Fetch repo and file content if possible
+    let repoFiles: { path: string; content: string }[] = [];
+    let fileContent = '';
+    if (owner && repo && installationId) {
+      const appId = process.env.GITHUB_APP_ID;
+      const privateKey = process.env.GITHUB_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const octokit = new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+          appId: appId!,
+          privateKey: privateKey!,
+          installationId: installationId!,
+        },
+      });
+      // Fetch all repo files (limit to 40 for prompt size)
+      try {
+        repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo });
+        if (repoFiles.length > 40) repoFiles = repoFiles.slice(0, 40);
+      } catch (e) {
+        repoFiles = [];
+      }
+      // Fetch specific file content if file_path is provided
+      if (file_path) {
+        try {
+          const { data } = await octokit.rest.repos.getContent({ owner, repo, path: file_path });
+          if (!Array.isArray(data) && data.type === 'file' && data.content) {
+            const buff = Buffer.from(data.content, 'base64');
+            // Limit to first 2000 lines
+            fileContent = buff.toString('utf-8').split(/\r?\n/).slice(0, 2000).join('\n');
+          }
+        } catch (e) {
+          fileContent = '';
+        }
+      }
     }
 
     // Compose the prompt
-    const prompt = `Review the following code and provide:\n- A title for the review\n- Suggestions for improvement\n- A list of issues (as an array of strings)\n- A list of improvements (as an array of strings)\nReturn a JSON object with keys: title, suggestions, issues, improvements.\nCode:${repoContext}\n${code}`;
+    const prompt = `Review the following code and provide:\n- A title for the review\n- Suggestions for improvement\n- A list of issues (as an array of strings)\n- A list of improvements (as an array of strings)\nReturn a JSON object with keys: title, suggestions, issues, improvements.\nCode:${repoContextStr}\n${code}\n\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => {
+      // Limit to first 2000 lines per file
+      const lines = f.content.split(/\r?\n/).slice(0, 2000).join('\n');
+      return `File: ${f.path}\n${lines}`;
+    }).join('\n---\n')}\n\n---\nTarget File Content:\n${fileContent}`;
 
     // Call Gemini API
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {

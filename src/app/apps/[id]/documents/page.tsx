@@ -20,6 +20,7 @@ import { toast } from 'sonner';
 // import { AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { Card, CardDescription, CardHeader } from '@/components/ui/card';
+import MdRenderer from '@/components/mdrenderer';
 
 const DocumentsPage = () => {
     const params = useParams();
@@ -239,67 +240,7 @@ const DocumentsPage = () => {
                         </Button>
                         <hr />
                         <TabsContent value="preview" className="flex-1 overflow-auto">
-                            <article className="prose prose-invert rounded-lg w-[80%] max-w-none border dark:border-gray-700 p-7 m-auto border-gray-300">
-                                <ReactMarkdown
-                                    remarkPlugins={[remarkGfm, remarkBreaks]}
-                                    rehypePlugins={[
-                                        rehypeHighlight,
-                                        rehypeSlug,
-                                        [rehypeAutolinkHeadings, { behavior: "wrap" }]
-                                    ]}
-                                    components={{
-                                        // Optional: customize rendering for checkboxes, tables, etc.
-                                        // Example: GitHub-style checkboxes
-                                        input: ({ node, ...props }) =>
-                                            props.type === "checkbox" ? (
-                                                <input {...props} disabled className="mr-2 accent-blue-500" />
-                                            ) : (
-                                                <input {...props} />
-                                            ),
-                                        // Optional: style tables
-                                        table: ({ node, ...props }) => (
-                                            <table className="border-collapse border border-border" {...props} />
-                                        ),
-                                        th: ({ node, ...props }) => (
-                                            <th className="border border-border bg-muted px-2 py-1" {...props} />
-                                        ),
-                                        td: ({ node, ...props }) => (
-                                            <td className="border border-border px-2 py-1" {...props} />
-                                        ),
-                                        h1: ({ node, ...props }) => (
-                                            <h1 className='text-5xl py-3 hover:underline' {...props} />
-                                        ),
-                                        h2: ({ node, ...props }) => (
-                                            <h2 className='text-3xl py-3 hover:underline' {...props} />
-                                        ),
-                                        h3: ({ node, ...props }) => (
-                                            <h3 className='text-2xl py-3 hover:underline' {...props} />
-                                        ),
-                                        hr: ({ node, ...props }) => (
-                                            <hr className='py-2 mt-4' />
-                                        ),
-                                        code({
-                                            // node,
-                                            inline,
-                                            className,
-                                            children,
-                                            ...props
-                                        }: React.HTMLAttributes<HTMLElement> & { inline?: boolean; children?: React.ReactNode }) {
-                                            return inline ? (
-                                                <code className="bg-muted px-1 rounded text-sm" {...props}>{children}</code>
-                                            ) : (
-                                                <pre className="bg-muted rounded p-3 overflow-x-auto my-2">
-                                                    <code className={className} {...props}>
-                                                        {children}
-                                                    </code>
-                                                </pre>
-                                            );
-                                        },
-                                    }}
-                                >
-                                    {viewDoc?.content || ""}
-                                </ReactMarkdown>
-                            </article>
+                            <MdRenderer content={viewDoc?.content} />
                         </TabsContent>
                         <TabsContent value="edit" className="flex-1 flex flex-col">
                             <Textarea

@@ -140,7 +140,7 @@ export default function Page() {
                         </div>
                         <br />
                         <Card
-                            className="w-[screen] text-white rounded-xl p-6 border border-border transition-transform  flex flex-col justify-between min-h-[180px]">
+                            className="w-[screen] rounded-xl p-6 border border-border transition-transform  flex flex-col justify-between min-h-[180px]">
                             <Bot size={48} />
                             <p className='text-4xl'>AI Features</p>
                             <p>Use AI features to make your flow efficient & save time!</p>

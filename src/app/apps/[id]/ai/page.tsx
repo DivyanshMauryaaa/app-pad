@@ -10,9 +10,12 @@ import { Textarea } from "@/components/ui/textarea";
 import { Card, CardHeader, CardTitle, CardDescription, CardContent, CardFooter } from "@/components/ui/card";
 import { Checkbox } from "@/components/ui/checkbox";
 import { Label } from "@/components/ui/label";
-import { Plus, Save, Loader2, ListChecks } from "lucide-react";
+import { Select, SelectContent, SelectItem, SelectTrigger, SelectValue } from "@/components/ui/select";
+import { Badge } from "@/components/ui/badge";
+import { Plus, Save, Loader2, ListChecks, FileText, Bug, Code, MessageCircle, Download, Copy, ExternalLink } from "lucide-react";
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
+import MdRenderer from '@/components/mdrenderer';
 
 type TodoList = {
   id: string;
@@ -35,11 +38,61 @@ type Todo = {
   updated_at: string;
 };
 
+type Document = {
+  id: string;
+  app_id: string;
+  title: string;
+  content: string;
+  type: 'readme' | 'api' | 'guide' | 'changelog' | 'other';
+  created_at: string;
+  updated_at: string;
+};
+
+type BugReport = {
+  id: string;
+  app_id: string;
+  title: string;
+  description: string;
+  severity: 'low' | 'medium' | 'high' | 'critical';
+  status: 'open' | 'in_progress' | 'resolved' | 'closed';
+  file_path?: string;
+  line_number?: number;
+  created_at: string;
+  updated_at: string;
+};
+
+type CodeReview = {
+  id: string;
+  app_id: string;
+  title: string;
+  file_path: string;
+  suggestions: string;
+  issues: string[];
+  improvements: string[];
+  created_at: string;
+  updated_at: string;
+};
+
+type ChatMessage = {
+  id: string;
+  role: 'user' | 'assistant';
+  content: string;
+  timestamp: string;
+};
+
 const AiPage = () => {
   const params = useParams();
   const appId = params.id as string;
   const { user } = useUser();
 
+  // Repository data
+  const [installationId, setInstallationId] = useState('');
+  const [githubRepo, setGithubRepo] = useState('');
+  const [path, setPath] = useState('');
+  const [owner, setOwner] = useState('');
+  const [repo, setRepo] = useState('');
+
+  // Todo Generator state
   const [prompt, setPrompt] = useState("");
   const [isGenerating, setIsGenerating] = useState(false);
   const [todoLists, setTodoLists] = useState<TodoList[]>([]);
@@ -50,9 +103,83 @@ const AiPage = () => {
   const [newListDescription, setNewListDescription] = useState("");
   const [generatedTodos, setGeneratedTodos] = useState<Omit<Todo, 'id' | 'list_id' | 'app_id' | 'created_at' | 'updated_at'>[]>([]);
 
+  // Document Generator state
+  const [docPrompt, setDocPrompt] = useState("");
+  const [isGeneratingDoc, setIsGeneratingDoc] = useState(false);
+  const [generatedDoc, setGeneratedDoc] = useState<Partial<Document> | null>(null);
+  const [documents, setDocuments] = useState<Document[]>([]);
+  const [selectedDoc, setSelectedDoc] = useState<Document | null>(null);
+
+  // Bug Reporter state
+  const [bugDescription, setBugDescription] = useState("");
+  const [bugFilePath, setBugFilePath] = useState("");
+  const [isGeneratingBugs, setIsGeneratingBugs] = useState(false);
+  const [bugReports, setBugReports] = useState<BugReport[]>([]);
+  const [selectedBug, setSelectedBug] = useState<BugReport | null>(null);
+
+  // Code Review state
+  const [reviewFilePath, setReviewFilePath] = useState("");
+  const [reviewCode, setReviewCode] = useState("");
+  const [isGeneratingReview, setIsGeneratingReview] = useState(false);
+  const [codeReviews, setCodeReviews] = useState<CodeReview[]>([]);
+  const [selectedReview, setSelectedReview] = useState<CodeReview | null>(null);
+
+  // Chat state
+  const [chatMessages, setChatMessages] = useState<ChatMessage[]>([]);
+  const [chatInput, setChatInput] = useState("");
+  const [isChatLoading, setIsChatLoading] = useState(false);
+
+  useEffect(() => {
+    const fetchRepoData = async () => {
+      const { data, error } = await supabase
+        .from('apps')
+        .select('*')
+        .eq('id', appId)
+        .single();
+      console.log(data);
+
+      if (error) {
+        console.error('Error fetching app repo data:', error);
+        toast.error(`Failed to fetch app repo data. ${error.cause + error.message + error.name}` );
+        return;
+      }
+
+      if (data) {
+        setInstallationId(data.github_installation_id || '');
+        setGithubRepo(data.github_repo || '');
+        // Parse owner and repo from github_repo (format: owner/repo)
+        if (data.github_repo && data.github_repo.includes('/')) {
+          const [owner, repo] = data.github_repo.split('/');
+          setOwner(owner);
+          setRepo(repo);
+        } else {
+          setOwner('');
+          setRepo('');
+          toast.error('No valid GitHub repository connected to this app. Please connect a repo in the format owner/repo.');
+        }
+      } else {
+        setOwner('');
+        setRepo('');
+        setInstallationId('');
+        setGithubRepo('');
+        toast.error('Failed to fetch app repo data.');
+      }
+    };
+    fetchRepoData();
+  }, [appId]);
+
+  const repoParams = {
+    owner: owner,
+    repo: repo,
+    installationId: installationId
+  };
+
   useEffect(() => {
     if (appId) {
       fetchTodoLists();
+      fetchDocuments();
+      fetchBugReports();
+      fetchCodeReviews();
     }
   }, [appId]);
 
@@ -88,6 +215,42 @@ const AiPage = () => {
     }
   };
 
+  const fetchDocuments = async () => {
+    const { data, error } = await supabase
+      .from('documents')
+      .select('*')
+      .eq('app_id', appId)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setDocuments(data);
+    }
+  };
+
+  const fetchBugReports = async () => {
+    const { data, error } = await supabase
+      .from('bug_reports')
+      .select('*')
+      .eq('app_id', appId)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setBugReports(data);
+    }
+  };
+
+  const fetchCodeReviews = async () => {
+    const { data, error } = await supabase
+      .from('code_reviews')
+      .select('*')
+      .eq('app_id', appId)
+      .order('created_at', { ascending: false });
+
+    if (!error && data) {
+      setCodeReviews(data);
+    }
+  };
+
   const generateTodos = async () => {
     if (!prompt.trim()) {
       toast.error('Please enter a feature description');
@@ -96,19 +259,16 @@ const AiPage = () => {
 
     setIsGenerating(true);
     try {
-      // Call Google AI Studio API
-      const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {
+      const response = await fetch('/api/ai/create-todo-list', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
-          'x-goog-api-key': process.env.NEXT_PUBLIC_GOOGLE_AI_STUDIO_API_KEY || ''
         },
         body: JSON.stringify({
-          contents: [{
-            parts: [{
-              text: `Break down the following software feature into specific development tasks as a JSON array of objects with "name" and "description" properties. Each task should be actionable for a developer. Be concise but clear. Feature: ${prompt}`
-            }]
-          }]
+          prompt,
+          ...repoParams,
+          app_id: appId,
+          user_id: user?.id || null
         })
       });
 
@@ -117,58 +277,233 @@ const AiPage = () => {
       }
 
       const data = await response.json();
-
-      // Extract the generated content
-      const generatedText = data.candidates?.[0]?.content?.parts?.[0]?.text;
-      if (!generatedText) {
-        throw new Error('No generated content found in response');
-      }
-
-      // Try to parse the JSON from the response
-      let parsedTodos;
-      try {
-        // The API might return markdown with JSON inside, so we try to extract it
-        const jsonMatch = generatedText.match(/```json\n([\s\S]*?)\n```/);
-        if (jsonMatch) {
-          parsedTodos = JSON.parse(jsonMatch[1]);
-        } else {
-          // If no markdown, try to parse the whole response as JSON
-          parsedTodos = JSON.parse(generatedText);
-        }
-      } catch (e) {
-        // If parsing fails, try to handle plain text response
-        const lines = generatedText.split('\n').filter((line: any) => line.trim());
-        parsedTodos = lines.map((line: any) => {
-          const [name, ...descParts] = line.split(':');
-          return {
-            name: name.trim(),
-            description: descParts.join(':').trim()
-          };
-        });
-      }
+      const parsedTodos = data.todos;
 
       if (!Array.isArray(parsedTodos)) {
         throw new Error('Generated content is not in expected format');
       }
 
-      // Create a new list with the prompt as the name
       setNewListName(`Feature: ${prompt.substring(0, 50)}${prompt.length > 50 ? '...' : ''}`);
       setNewListDescription(prompt);
-
-      // Set the generated todos in state
-      setGeneratedTodos(parsedTodos.map(todo => ({
+      setGeneratedTodos(parsedTodos.map((todo: any) => ({
         name: todo.name || 'Unnamed task',
         description: todo.description || '',
         status: 'pending',
         link: ''
       })));
-
       toast.success('Tasks generated successfully');
     } catch (error) {
       console.error('Error generating todos:', error);
       toast.error('Failed to generate tasks. Please try again.');
     } finally {
       setIsGenerating(false);
+    }
+  };
+
+  const generateDocument = async () => {
+    if (!docPrompt.trim()) {
+      toast.error('Please enter a document description');
+      return;
+    }
+
+    setIsGeneratingDoc(true);
+    try {
+      const response = await fetch('/api/ai/create-doc', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          prompt: docPrompt,
+          ...repoParams,
+          app_id: appId,
+          user_id: user?.id || null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      setGeneratedDoc({
+        title: data.title,
+        content: data.content
+      });
+      toast.success('Document generated successfully');
+    } catch (error) {
+      console.error('Error generating document:', error);
+      toast.error('Failed to generate document. Please try again.');
+    } finally {
+      setIsGeneratingDoc(false);
+    }
+  };
+
+  const generateBugReport = async () => {
+    if (!bugDescription.trim()) {
+      toast.error('Please describe the bug or issue');
+      return;
+    }
+
+    setIsGeneratingBugs(true);
+    try {
+      const response = await fetch('/api/ai/report-bugs', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          description: bugDescription,
+          file_path: bugFilePath,
+          ...repoParams,
+          app_id: appId,
+          user_id: user?.id || null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Save bug report to database
+      const { data: savedBug, error } = await supabase
+        .from('bugs')
+        .insert({
+          app_id: appId,
+          name: data.title,
+          description: data.description,
+          severity: data.severity,
+          // status: 'open',
+          // file_path: bugFilePath || null,
+          // line_number: data.line_number || null,
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (!error && savedBug) {
+        setBugReports(prev => [savedBug, ...prev]);
+        setBugDescription('');
+        setBugFilePath('');
+        toast.success('Bug report generated and saved');
+      }
+    } catch (error) {
+      console.error('Error generating bug report:', error);
+      toast.error('Failed to generate bug report. Please try again.');
+    } finally {
+      setIsGeneratingBugs(false);
+    }
+  };
+
+  const generateCodeReview = async () => {
+    if (!reviewCode.trim()) {
+      toast.error('Please provide code to review');
+      return;
+    }
+
+    setIsGeneratingReview(true);
+    try {
+      const response = await fetch('/api/ai/code-review', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          code: reviewCode,
+          file_path: reviewFilePath,
+          ...repoParams,
+          app_id: appId,
+          user_id: user?.id || null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      // Save code review to database
+      const { data: savedReview, error } = await supabase
+        .from('code_reviews')
+        .insert({
+          app_id: appId,
+          title: data.title,
+          file_path: reviewFilePath,
+          suggestions: data.suggestions,
+          issues: data.issues || [],
+          improvements: data.improvements || [],
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (!error && savedReview) {
+        setCodeReviews(prev => [savedReview, ...prev]);
+        setReviewCode('');
+        setReviewFilePath('');
+        toast.success('Code review generated and saved');
+      }
+    } catch (error) {
+      console.error('Error generating code review:', error);
+      toast.error('Failed to generate code review. Please try again.');
+    } finally {
+      setIsGeneratingReview(false);
+    }
+  };
+
+  const sendChatMessage = async () => {
+    if (!chatInput.trim()) return;
+
+    const userMessage: ChatMessage = {
+      id: Date.now().toString(),
+      role: 'user',
+      content: chatInput,
+      timestamp: new Date().toISOString()
+    };
+
+    setChatMessages(prev => [...prev, userMessage]);
+    setChatInput('');
+    setIsChatLoading(true);
+
+    try {
+      const response = await fetch('/api/ai/chat', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          message: chatInput,
+          history: chatMessages,
+          ...repoParams,
+          app_id: appId,
+          user_id: user?.id || null
+        })
+      });
+
+      if (!response.ok) {
+        throw new Error(`API request failed with status ${response.status}`);
+      }
+
+      const data = await response.json();
+      
+      const assistantMessage: ChatMessage = {
+        id: (Date.now() + 1).toString(),
+        role: 'assistant',
+        content: data.response,
+        timestamp: new Date().toISOString()
+      };
+
+      setChatMessages(prev => [...prev, assistantMessage]);
+    } catch (error) {
+      console.error('Error sending chat message:', error);
+      toast.error('Failed to send message. Please try again.');
+    } finally {
+      setIsChatLoading(false);
     }
   };
 
@@ -185,7 +520,6 @@ const AiPage = () => {
 
     setIsSaving(true);
     try {
-      // Save the todo list first
       const { data: listData, error: listError } = await supabase
         .from('todo_lists')
         .insert({
@@ -200,7 +534,6 @@ const AiPage = () => {
 
       if (listError) throw listError;
 
-      // Save all todos
       const todosToInsert = generatedTodos.map(todo => ({
         app_id: appId,
         list_id: listData.id,
@@ -218,7 +551,6 @@ const AiPage = () => {
 
       if (todosError) throw todosError;
 
-      // Refresh the lists
       await fetchTodoLists();
       setSelectedListId(listData.id);
       setGeneratedTodos([]);
@@ -232,6 +564,38 @@ const AiPage = () => {
     }
   };
 
+  const saveDocument = async () => {
+    if (!generatedDoc) {
+      toast.error('No document to save');
+      return;
+    }
+
+    try {
+      const { data, error } = await supabase
+        .from('documents')
+        .insert({
+          app_id: appId,
+          name: generatedDoc.title!,
+          content: generatedDoc.content!,
+          type: 'other', // Assuming all documents are markdown
+          created_at: new Date().toISOString(),
+          updated_at: new Date().toISOString()
+        })
+        .select()
+        .single();
+
+      if (error) throw error;
+
+      setDocuments(prev => [data, ...prev]);
+      setGeneratedDoc(null);
+      setDocPrompt('');
+      toast.success('Document saved successfully');
+    } catch (error) {
+      console.error('Error saving document:', error);
+      toast.error('Failed to save document');
+    }
+  };
+
   const updateTodoStatus = async (listId: string, todoId: string, status: string) => {
     try {
       const { error } = await supabase
@@ -241,7 +605,6 @@ const AiPage = () => {
 
       if (error) throw error;
 
-      // Update local state
       setTodos(prev => ({
         ...prev,
         [listId]: prev[listId].map(todo =>
@@ -251,6 +614,33 @@ const AiPage = () => {
     } catch (error) {
       console.error('Error updating todo status:', error);
       toast.error('Failed to update task status');
+    }
+  };
+
+  const updateBugStatus = async (bugId: string, status: string) => {
+    try {
+      const { error } = await supabase
+        .from('bugs')
+        .update({ status, updated_at: new Date().toISOString() })
+        .eq('id', bugId);
+
+      if (error) throw error;
+
+      setBugReports(prev => prev.map(bug =>
+        bug.id === bugId ? { ...bug, status: status as any, updated_at: new Date().toISOString() } : bug
+      ));
+    } catch (error) {
+      console.error('Error updating bug status:', error);
+      toast.error('Failed to update bug status');
+    }
+  };
+
+  const copyToClipboard = async (text: string) => {
+    try {
+      await navigator.clipboard.writeText(text);
+      toast.success('Copied to clipboard');
+    } catch (error) {
+      toast.error('Failed to copy to clipboard');
     }
   };
 
@@ -264,10 +654,10 @@ const AiPage = () => {
           <TabsTrigger value="bug-gen">Bug Reporter</TabsTrigger>
           <TabsTrigger value="code-review">Code Review</TabsTrigger>
           <TabsTrigger value="pulseai-chat">PulseAI Chat</TabsTrigger>
-
         </TabsList>
+
+        {/* Todo Generator Tab */}
         <TabsContent value="todo-gen">
-          {/* Todo Generator UI START */}
           <Card className="mb-8">
             <CardHeader>
               <CardTitle>Generate Development Tasks</CardTitle>
@@ -420,40 +810,316 @@ const AiPage = () => {
               </div>
             </div>
           )}
-          {/* Todo Generator UI END */}
         </TabsContent>
+
+        {/* Document Generator Tab */}
         <TabsContent value="document-gen">
-          <Card>
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>More AI Agents Coming Soon</CardTitle>
+              <CardTitle>Generate Documentation</CardTitle>
               <CardDescription>
-                This space is reserved for future AI features, such as bug suggestion, code review, and more.
+                Create comprehensive documentation for your project automatically.
               </CardDescription>
             </CardHeader>
             <CardContent>
-              <p className="text-muted-foreground">Stay tuned for more AI-powered tools to boost your productivity!</p>
+              <div className="space-y-4">
+                <Textarea
+                  value={docPrompt}
+                  onChange={(e) => setDocPrompt(e.target.value)}
+                  placeholder="Describe what documentation you need (e.g., 'Create a comprehensive README for a React TypeScript project with setup instructions')"
+                  rows={4}
+                />
+                <Button onClick={generateDocument} disabled={isGeneratingDoc}>
+                  {isGeneratingDoc ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <FileText className="mr-2 h-4 w-4" />
+                      Generate Document
+                    </>
+                  )}
+                </Button>
+              </div>
             </CardContent>
           </Card>
+
+          {generatedDoc && (
+            <Card className="mb-8">
+              <CardHeader>
+                <div className="flex items-center justify-between">
+                  <div>
+                    <CardTitle>{generatedDoc.title}</CardTitle>
+                    <CardDescription>Generated document</CardDescription>
+                  </div>
+                  <div className="flex gap-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => copyToClipboard(generatedDoc.content || '')}
+                    >
+                      <Copy className="mr-2 h-4 w-4" />
+                      Copy
+                    </Button>
+                    <Button size="sm" onClick={saveDocument}>
+                      <Save className="mr-2 h-4 w-4" />
+                      Save
+                    </Button>
+                  </div>
+                </div>
+              </CardHeader>
+              <CardContent>
+                <div className="bg-muted p-4 rounded-md">
+                  <pre className="whitespace-pre-wrap text-sm">{generatedDoc.content}</pre>
+                </div>
+              </CardContent>
+            </Card>
+          )}
+
+          {documents.length > 0 && (
+            <div>
+              <h2 className="text-xl font-semibold mb-4">Your Documents</h2>
+              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
+                {documents.map((doc) => (
+                  <Card
+                    key={doc.id}
+                    className="cursor-pointer hover:bg-accent"
+                    onClick={() => setSelectedDoc(doc)}
+                  >
+                    <CardHeader>
+                      <CardTitle>{doc.title}</CardTitle>
+                      <CardDescription>{doc.type}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="truncate text-sm text-muted-foreground">
+                        {doc.content.slice(0, 100)}{doc.content.length > 100 ? '...' : ''}
+                      </div>
+                    </CardContent>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </TabsContent>
+
+        {/* Bug Reporter Tab */}
         <TabsContent value="bug-gen">
-          <Card>
+          <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Bug Reporter</CardTitle>
+              <CardTitle>Report Bugs and Issues</CardTitle>
+              <CardDescription>
+                Describe a bug or issue you've encountered and we'll help you fix it.
+              </CardDescription>
             </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Textarea
+                  value={bugDescription}
+                  onChange={(e) => setBugDescription(e.target.value)}
+                  placeholder="Describe the bug or issue you encountered (e.g., 'The login page is not loading, showing a blank screen')"
+                  rows={4}
+                />
+                <Input
+                  value={bugFilePath}
+                  onChange={(e) => setBugFilePath(e.target.value)}
+                  placeholder="Enter the file path (e.g., 'src/pages/Login.tsx')"
+                />
+                <Button onClick={generateBugReport} disabled={isGeneratingBugs}>
+                  {isGeneratingBugs ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Bug className="mr-2 h-4 w-4" />
+                      Report Bug
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
           </Card>
+
+          {bugReports.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">Your Bug Reports</h2>
+              <div className="space-y-4">
+                {bugReports.map((bug) => (
+                  <Card key={bug.id}>
+                    <CardHeader>
+                      <div className="flex items-center justify-between">
+                        <div>
+                          <CardTitle>{bug.title}</CardTitle>
+                          <CardDescription>Severity: {bug.severity}</CardDescription>
+                        </div>
+                        <Badge variant={bug.severity === 'critical' ? 'destructive' : bug.severity === 'high' ? 'secondary' : 'default'}>
+                          {bug.status}
+                        </Badge>
+                      </div>
+                    </CardHeader>
+                    <CardContent>
+                      <p>{bug.description}</p>
+                      {bug.file_path && (
+                        <p className="text-sm text-muted-foreground">
+                          File: {bug.file_path}{bug.line_number ? ` (Line ${bug.line_number})` : ''}
+                        </p>
+                      )}
+                    </CardContent>
+                    <CardFooter>
+                      <div className="flex items-center text-muted-foreground text-sm">
+                        <MessageCircle className="mr-1 h-4 w-4" />
+                        {new Date(bug.created_at).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center text-muted-foreground text-sm">
+                        <ExternalLink className="mr-1 h-4 w-4" />
+                        {new Date(bug.updated_at).toLocaleDateString()}
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </TabsContent>
+
+        {/* Code Review Tab */}
         <TabsContent value="code-review">
-          <Card>
+          <Card className="mb-8">
             <CardHeader>
               <CardTitle>Code Review</CardTitle>
+              <CardDescription>
+                Provide code for review and we'll give you suggestions and improvements.
+              </CardDescription>
             </CardHeader>
+            <CardContent>
+              <div className="space-y-4">
+                <Textarea
+                  value={reviewCode}
+                  onChange={(e) => setReviewCode(e.target.value)}
+                  placeholder="Paste your code here for review (e.g., 'function calculateTotal(items: Item[]) { ... }')"
+                  rows={10}
+                />
+                <Input
+                  value={reviewFilePath}
+                  onChange={(e) => setReviewFilePath(e.target.value)}
+                  placeholder="Enter the file path (e.g., 'src/components/Cart.tsx')"
+                />
+                <Button onClick={generateCodeReview} disabled={isGeneratingReview}>
+                  {isGeneratingReview ? (
+                    <>
+                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                      Generating...
+                    </>
+                  ) : (
+                    <>
+                      <Code className="mr-2 h-4 w-4" />
+                      Generate Code Review
+                    </>
+                  )}
+                </Button>
+              </div>
+            </CardContent>
           </Card>
+
+          {codeReviews.length > 0 && (
+            <div className="mt-8">
+              <h2 className="text-xl font-semibold mb-4">Your Code Reviews</h2>
+              <div className="space-y-4">
+                {codeReviews.map((review) => (
+                  <Card key={review.id}>
+                    <CardHeader>
+                      <CardTitle>{review.title}</CardTitle>
+                      <CardDescription>File: {review.file_path}</CardDescription>
+                    </CardHeader>
+                    <CardContent>
+                      <div className="mb-2">
+                        <strong>Suggestions:</strong>
+                        <MdRenderer content={review.suggestions} />
+                      </div>
+                      <div className="mb-2">
+                        <strong>Issues:</strong>
+                        <MdRenderer content={Array.isArray(review.issues) ? review.issues.join('\n') : review.issues} />
+                      </div>
+                      <div className="mb-2">
+                        <strong>Improvements:</strong>
+                        <MdRenderer content={Array.isArray(review.improvements) ? review.improvements.join('\n') : review.improvements} />
+                      </div>
+                    </CardContent>
+                    <CardFooter>
+                      <div className="flex items-center text-muted-foreground text-sm">
+                        <MessageCircle className="mr-1 h-4 w-4" />
+                        {new Date(review.created_at).toLocaleDateString()}
+                      </div>
+                      <div className="flex items-center text-muted-foreground text-sm">
+                        <ExternalLink className="mr-1 h-4 w-4" />
+                        {new Date(review.updated_at).toLocaleDateString()}
+                      </div>
+                    </CardFooter>
+                  </Card>
+                ))}
+              </div>
+            </div>
+          )}
         </TabsContent>
+
+        {/* PulseAI Chat Tab */}
         <TabsContent value="pulseai-chat">
-          <Card>
+          <Card className="mb-8">
             <CardHeader>
               <CardTitle>PulseAI Chat</CardTitle>
+              <CardDescription>
+                Chat with PulseAI to get help with your project.
+              </CardDescription>
             </CardHeader>
+            <CardContent>
+              <div className="flex flex-col h-[calc(100vh-400px)]">
+                <div className="flex-1 overflow-y-auto pr-4 mb-4">
+                  {chatMessages.map((msg) => (
+                    <div key={msg.id} className={`flex ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+                      <div className={`p-3 rounded-lg max-w-[80%] ${msg.role === 'user' ? 'bg-primary text-white' : 'bg-muted'}`}>
+                        {msg.role === 'assistant' ? (
+                          <MdRenderer content={msg.content} />
+                        ) : (
+                          <p>{msg.content}</p>
+                        )}
+                        <div className="text-xs text-muted-foreground mt-1">
+                          {new Date(msg.timestamp).toLocaleTimeString()}
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                  {isChatLoading && (
+                    <div className="flex justify-start">
+                      <div className="p-3 rounded-lg bg-muted">
+                        <p>PulseAI is typing...</p>
+                      </div>
+                    </div>
+                  )}
+                </div>
+                <div className="flex gap-2">
+                  <Input
+                    value={chatInput}
+                    onChange={(e) => setChatInput(e.target.value)}
+                    onKeyPress={(e) => {
+                      if (e.key === 'Enter') {
+                        sendChatMessage();
+                      }
+                    }}
+                    placeholder="Ask PulseAI a question..."
+                  />
+                  <Button onClick={sendChatMessage} disabled={isChatLoading}>
+                    {isChatLoading ? (
+                      <Loader2 className="h-4 w-4 animate-spin" />
+                    ) : (
+                      <MessageCircle className="h-4 w-4" />
+                    )}
+                  </Button>
+                </div>
+              </div>
+            </CardContent>
           </Card>
         </TabsContent>
       </Tabs>

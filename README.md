@@ -58,16 +58,17 @@ FixFlow eliminates the chaos by centralizing:
 - **Styling**: Tailwind CSS
 - **Authentication**: Clerk
 - **AI Integration**: Gemini for documentation and planning
-- **Database**: Supabse
+- **Database**: Supabase
 ---
 
 ## 🚀 Getting Started
 
 ### Prerequisites
 - Node.js 18+
-- PostgreSQL database
+- Supabase database keys
 - GitHub account for integrations
-- OpenAI API key
+- GitHub API Creds
+- Google AI API key
 
 ### Installation
 
@@ -121,9 +122,6 @@ npm run dev
 - **Solo developers** building side projects
 - **Indie hackers** launching SaaS products
 - **Small development teams** (2-10 people)
-- **Digital agencies** managing client projects
-- **Freelance developers** who need professional presentation
-
 ---
 
 <!--

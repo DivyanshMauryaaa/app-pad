@@ -8,7 +8,7 @@ import { Octokit } from 'octokit';
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, owner, repo, installationId, app_id, user_id } = await req.json();
+    const { prompt, owner, repo, installationId, app_id, user_id, file_path } = await req.json();
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ error: 'Missing or invalid prompt' }, { status: 400 });
     }
@@ -36,19 +36,14 @@ export async function POST(req: NextRequest) {
         },
       });
       try {
-        repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo });
-        if (repoFiles.length > 40) repoFiles = repoFiles.slice(0, 40);
+        repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo, path: file_path || '' });
       } catch (e) {
         repoFiles = [];
       }
     }
 
     // Compose the prompt
-    const Newprompt = `${repoContext}\n${prompt}\n\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => {
-      // Limit to first 2000 lines per file
-      const lines = f.content.split(/\r?\n/).slice(0, 2000).join('\n');
-      return `File: ${f.path}\n${lines}`;
-    }).join('\n---\n')}`;
+    const Newprompt = `${repoContext}\n${prompt}\n\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => `File: ${f.path}\n${f.content}`).join('\n---\n')}`;
 
 
     // Call Google AI Studio API (Gemini)

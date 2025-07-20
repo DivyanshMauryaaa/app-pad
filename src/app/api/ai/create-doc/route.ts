@@ -1,22 +1,42 @@
 import { NextRequest, NextResponse } from 'next/server';
+import { Octokit } from '@octokit/rest';
+import { createAppAuth } from '@octokit/auth-app';
+import { fetchAllRepoFilesWithContent } from '@/lib/github';
 
 // This endpoint expects a POST request with a JSON body containing a 'prompt' string and repo parameters.
 // It returns generated documentation as markdown content and a title.
 
 export async function POST(req: NextRequest) {
   try {
-    const { prompt, owner, repo, installationId, app_id, user_id } = await req.json();
+    const { prompt, owner, repo, installationId, app_id, user_id, file_path } = await req.json();
     if (!prompt || typeof prompt !== 'string') {
       return NextResponse.json({ error: 'Missing or invalid prompt' }, { status: 400 });
     }
 
     // Add repo context to the AI prompt
     let repoContext = '';
-    if (owner && repo) {
+    let repoFiles: { path: string; content: string }[] = [];
+    if (owner && repo && installationId) {
+      const appId = process.env.GITHUB_APP_ID;
+      const privateKey = process.env.GITHUB_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const octokit = new Octokit({
+        authStrategy: createAppAuth,
+        auth: {
+          appId: appId!,
+          privateKey: privateKey!,
+          installationId: installationId!,
+        },
+      });
+      try {
+        repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo, path: file_path || '' });
+      } catch (e) {
+        repoFiles = [];
+      }
       repoContext = `\nRepository: ${owner}/${repo}`;
       if (installationId) repoContext += `\nInstallation ID: ${installationId}`;
       if (app_id) repoContext += `\nApp ID: ${app_id}`;
       if (user_id) repoContext += `\nUser ID: ${user_id}`;
+      repoContext += `\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => `File: ${f.path}\n${f.content}`).join('\n---\n')}`;
     }
 
     // Call Google AI Studio API (Gemini)

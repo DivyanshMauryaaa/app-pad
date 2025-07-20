@@ -6,10 +6,6 @@ import { fetchAllRepoFilesWithContent } from '@/lib/github';
 export async function POST(req: NextRequest) {
   try {
     const { code, file_path, owner, repo, installationId, app_id, user_id, repoContext } = await req.json();
-    if (!code || typeof code !== 'string') {
-      return NextResponse.json({ error: 'Missing or invalid code' }, { status: 400 });
-    }    
-
     // Use repoContext from client, fallback to empty string
     const repoContextStr = typeof repoContext === 'string' ? repoContext : '';
 
@@ -27,21 +23,19 @@ export async function POST(req: NextRequest) {
           installationId: installationId!,
         },
       });
-      // Fetch all repo files (limit to 40 for prompt size)
+      // Fetch all repo files (no limit for code review)
       try {
-        repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo });
-        if (repoFiles.length > 40) repoFiles = repoFiles.slice(0, 40);
+        repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo, path: file_path || '' });
       } catch (e) {
         repoFiles = [];
       }
-      // Fetch specific file content if file_path is provided
+      // Fetch specific file content if file_path is provided and is a file
       if (file_path) {
         try {
           const { data } = await octokit.rest.repos.getContent({ owner, repo, path: file_path });
           if (!Array.isArray(data) && data.type === 'file' && data.content) {
             const buff = Buffer.from(data.content, 'base64');
-            // Limit to first 2000 lines
-            fileContent = buff.toString('utf-8').split(/\r?\n/).slice(0, 2000).join('\n');
+            fileContent = buff.toString('utf-8');
           }
         } catch (e) {
           fileContent = '';
@@ -50,11 +44,12 @@ export async function POST(req: NextRequest) {
     }
 
     // Compose the prompt
-    const prompt = `Review the following code and provide:\n- A title for the review\n- Suggestions for improvement\n- A list of issues (as an array of strings)\n- A list of improvements (as an array of strings)\nReturn a JSON object with keys: title, suggestions, issues, improvements.\nCode:${repoContextStr}\n${code}\n\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => {
-      // Limit to first 2000 lines per file
-      const lines = f.content.split(/\r?\n/).slice(0, 2000).join('\n');
-      return `File: ${f.path}\n${lines}`;
-    }).join('\n---\n')}\n\n---\nTarget File Content:\n${fileContent}`;
+    let prompt = '';
+    if (code && typeof code === 'string') {
+      prompt = `Review the following code and provide:\n- A title for the review\n- Suggestions for improvement\n- A list of issues (as an array of strings)\n- A list of improvements (as an array of strings)\nReturn a JSON object with keys: title, suggestions, issues, improvements.\nCode:${repoContextStr}\n${code}\n\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => `File: ${f.path}\n${f.content}`).join('\n---\n')}\n\n---\nTarget File Content:\n${fileContent}`;
+    } else {
+      prompt = `Review the following repository or path and provide:\n- A title for the review\n- Suggestions for improvement\n- A list of issues (as an array of strings)\n- A list of improvements (as an array of strings)\nReturn a JSON object with keys: title, suggestions, issues, improvements.\n${repoContextStr}\n\n---\nRepository Files (partial):\n${repoFiles.map((f: { path: string; content: string }) => `File: ${f.path}\n${f.content}`).join('\n---\n')}`;
+    }
 
     // Call Gemini API
     const response = await fetch('https://generativelanguage.googleapis.com/v1beta/models/gemini-2.0-flash:generateContent', {

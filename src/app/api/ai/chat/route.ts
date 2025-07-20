@@ -37,7 +37,11 @@ export async function POST(req: NextRequest) {
       });
       try {
         repoFiles = await fetchAllRepoFilesWithContent({ octokit, owner, repo });
-        if (repoFiles.length > 40) repoFiles = repoFiles.slice(0, 40);
+        if (repoFiles.length > 30) repoFiles = repoFiles.slice(0, 30);
+        repoFiles = repoFiles.map(f => ({
+          path: f.path,
+          content: f.content.split(/\r?\n/).slice(0, 1000).join('\n')
+        }));
       } catch (e) {
         repoFiles = [];
       }

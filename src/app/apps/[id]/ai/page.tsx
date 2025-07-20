@@ -412,28 +412,26 @@ const AiPage = () => {
   };
 
   const generateCodeReview = async () => {
-    if (!reviewCode.trim()) {
-      toast.error('Please provide code to review');
-      return;
-    }
-
     setIsGeneratingReview(true);
     try {
+      const body: any = {
+        file_path: reviewFilePath,
+        repoContext,
+        owner,
+        repo,
+        installationId,
+        app_id: appId,
+        user_id: user?.id || null
+      };
+      if (reviewCode && reviewCode.trim()) {
+        body.code = reviewCode;
+      }
       const response = await fetch('/api/ai/code-review', {
         method: 'POST',
         headers: {
           'Content-Type': 'application/json',
         },
-        body: JSON.stringify({
-          code: reviewCode,
-          file_path: reviewFilePath,
-          repoContext,
-          owner,
-          repo,
-          installationId,
-          app_id: appId,
-          user_id: user?.id || null
-        })
+        body: JSON.stringify(body)
       });
 
       if (!response.ok) {
@@ -441,7 +439,6 @@ const AiPage = () => {
       }
 
       const data = await response.json();
-      
       // Save code review to database
       const { data: savedReview, error } = await supabase
         .from('code_reviews')
@@ -664,7 +661,7 @@ const AiPage = () => {
   };
 
   return (
-    <div className="container mx-auto py-8">
+    <div className="py-4">
       <h1 className="text-3xl font-bold mb-6">AI Features</h1>
       <Tabs defaultValue="todo-gen" className="w-full">
         <TabsList className="mb-6">
@@ -802,33 +799,6 @@ const AiPage = () => {
               </CardContent>
             </Card>
           )}
-
-          {todoLists.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Your Todo Lists</h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {todoLists.map((list) => (
-                  <Card
-                    key={list.id}
-                    className={`cursor-pointer hover:bg-accent ${selectedListId === list.id ? 'border-primary' : ''}`}
-                    onClick={() => setSelectedListId(list.id)}
-                  >
-                    <CardHeader>
-                      <CardTitle>{list.name}</CardTitle>
-                      <CardDescription>
-                        {list.description || 'No description'}
-                      </CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <p className="text-sm text-muted-foreground">
-                        {todos[list.id]?.length || 0} tasks
-                      </p>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
         </TabsContent>
 
         {/* Document Generator Tab */}
@@ -896,148 +866,60 @@ const AiPage = () => {
               </CardContent>
             </Card>
           )}
-
-          {documents.length > 0 && (
-            <div>
-              <h2 className="text-xl font-semibold mb-4">Your Documents</h2>
-              <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-                {documents.map((doc) => (
-                  <Card
-                    key={doc.id}
-                    className="cursor-pointer hover:bg-accent"
-                    onClick={() => setSelectedDoc(doc)}
-                  >
-                    <CardHeader>
-                      <CardTitle>{doc.title}</CardTitle>
-                      <CardDescription>{doc.type}</CardDescription>
-                    </CardHeader>
-                    <CardContent>
-                      <div className="truncate text-sm text-muted-foreground">
-                        {doc.content.slice(0, 100)}{doc.content.length > 100 ? '...' : ''}
-                      </div>
-                    </CardContent>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
         </TabsContent>
 
         {/* Bug Reporter Tab */}
         <TabsContent value="bug-gen">
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Report Bugs and Issues</CardTitle>
+              <CardTitle>Scan for Bugs and Issues</CardTitle>
               <CardDescription>
-                Describe a bug or issue you've encountered and we'll help you fix it.
+                Click 'Scan' to automatically analyze your codebase for bugs. Optionally, specify a file or folder path to scan a specific area.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Textarea
-                  value={bugDescription}
-                  onChange={(e) => setBugDescription(e.target.value)}
-                  placeholder="Describe the bug or issue you encountered (e.g., 'The login page is not loading, showing a blank screen')"
-                  rows={4}
-                />
                 <Input
                   value={bugFilePath}
                   onChange={(e) => setBugFilePath(e.target.value)}
-                  placeholder="Enter the file path (e.g., 'src/pages/Login.tsx')"
+                  placeholder="Optional: Enter file or folder path (e.g., 'src/pages/Login.tsx')"
                 />
                 <Button onClick={generateBugReport} disabled={isGeneratingBugs}>
                   {isGeneratingBugs ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
-                  ) : (
-                    <>
-                      <Bug className="mr-2 h-4 w-4" />
-                      Report Bug
-                    </>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
+                    ) : (
+                    <Bug className="mr-2 h-4 w-4" />
                   )}
+                  Scan
                 </Button>
               </div>
             </CardContent>
           </Card>
-
-          {bugReports.length > 0 && (
-            <div className="mt-8">
-              <h2 className="text-xl font-semibold mb-4">Your Bug Reports</h2>
-              <div className="space-y-4">
-                {bugReports.map((bug) => (
-                  <Card key={bug.id}>
-                    <CardHeader>
-                      <div className="flex items-center justify-between">
-                        <div>
-                          <CardTitle>{bug.title}</CardTitle>
-                          <CardDescription>Severity: {bug.severity}</CardDescription>
-                        </div>
-                        <Badge variant={bug.severity === 'critical' ? 'destructive' : bug.severity === 'high' ? 'secondary' : 'default'}>
-                          {bug.status}
-                        </Badge>
-                      </div>
-                    </CardHeader>
-                    <CardContent>
-                      <p>{bug.description}</p>
-                      {bug.file_path && (
-                        <p className="text-sm text-muted-foreground">
-                          File: {bug.file_path}{bug.line_number ? ` (Line ${bug.line_number})` : ''}
-                        </p>
-                      )}
-                    </CardContent>
-                    <CardFooter>
-                      <div className="flex items-center text-muted-foreground text-sm">
-                        <MessageCircle className="mr-1 h-4 w-4" />
-                        {new Date(bug.created_at).toLocaleDateString()}
-                      </div>
-                      <div className="flex items-center text-muted-foreground text-sm">
-                        <ExternalLink className="mr-1 h-4 w-4" />
-                        {new Date(bug.updated_at).toLocaleDateString()}
-                      </div>
-                    </CardFooter>
-                  </Card>
-                ))}
-              </div>
-            </div>
-          )}
         </TabsContent>
 
         {/* Code Review Tab */}
         <TabsContent value="code-review">
           <Card className="mb-8">
             <CardHeader>
-              <CardTitle>Code Review</CardTitle>
+              <CardTitle>Scan for Code Quality</CardTitle>
               <CardDescription>
-                Provide code for review and we'll give you suggestions and improvements.
+                Click 'Scan' to review your codebase for improvements. Optionally, specify a file or folder path to review a specific area.
               </CardDescription>
             </CardHeader>
             <CardContent>
               <div className="space-y-4">
-                <Textarea
-                  value={reviewCode}
-                  onChange={(e) => setReviewCode(e.target.value)}
-                  placeholder="Paste your code here for review (e.g., 'function calculateTotal(items: Item[]) { ... }')"
-                  rows={10}
-                />
                 <Input
                   value={reviewFilePath}
                   onChange={(e) => setReviewFilePath(e.target.value)}
-                  placeholder="Enter the file path (e.g., 'src/components/Cart.tsx')"
+                  placeholder="Optional: Enter file or folder path (e.g., 'src/components/Cart.tsx')"
                 />
                 <Button onClick={generateCodeReview} disabled={isGeneratingReview}>
                   {isGeneratingReview ? (
-                    <>
-                      <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                      Generating...
-                    </>
+                    <Loader2 className="mr-2 h-4 w-4 animate-spin" />
                   ) : (
-                    <>
-                      <Code className="mr-2 h-4 w-4" />
-                      Generate Code Review
-                    </>
+                    <Code className="mr-2 h-4 w-4" />
                   )}
+                  Scan
                 </Button>
               </div>
             </CardContent>

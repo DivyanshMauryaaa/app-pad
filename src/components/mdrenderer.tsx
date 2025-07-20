@@ -17,6 +17,7 @@ const MdRenderer = ({ content }: { content: string }) => {
                     rehypeSlug,
                     [rehypeAutolinkHeadings, { behavior: "wrap" }]
                 ]}
+                // remarkRehypeOptions={}
                 components={{
                     // Optional: customize rendering for checkboxes, tables, etc.
                     // Example: GitHub-style checkboxes
@@ -49,17 +50,20 @@ const MdRenderer = ({ content }: { content: string }) => {
                         <hr className='py-2 mt-4' />
                     ),
                     code({
-                        // node,
                         inline,
                         className,
                         children,
                         ...props
                     }: React.HTMLAttributes<HTMLElement> & { inline?: boolean; children?: React.ReactNode }) {
                         return inline ? (
-                            <code className="bg-muted text-red-600 px-1 py-0.5 rounded text-sm font-mono" {...props}>{children}</code>
+                            <pre className="rounded inline p-3 overflow-x-auto my-2">
+                                <code className={className} data-inline={inline ? 'true' : 'false'} {...props}>
+                                    {children}
+                                </code>
+                            </pre>
                         ) : (
-                            <pre className="bg-muted rounded p-3 overflow-x-auto my-2">
-                                <code className={className} {...props}>
+                            <pre className="rounded inline p-3 overflow-x-auto my-2">
+                                <code className={className} data-inline={inline ? 'true' : 'false'} {...props}>
                                     {children}
                                 </code>
                             </pre>

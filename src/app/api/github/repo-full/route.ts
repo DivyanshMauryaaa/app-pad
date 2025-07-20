@@ -30,12 +30,7 @@ export async function GET(req: NextRequest) {
     });
 
     const files = await fetchAllRepoFilesWithContent({ octokit, owner, repo });
-    // Limit to 40 files, and 2000 lines per file
-    const limitedFiles = files.slice(0, 40).map(f => ({
-      path: f.path,
-      content: f.content.split(/\r?\n/).slice(0, 2000).join('\n')
-    }));
-    return NextResponse.json({ files: limitedFiles });
+    return NextResponse.json({ files });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });
   }

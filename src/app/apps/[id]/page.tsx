@@ -77,7 +77,7 @@ export default function Page() {
                         { value: "todo", label: "Todo" },
                         { value: "bugs", label: "Bugs" },
                         { value: "documents", label: "Documents" },
-                        { value: "builds", label: "Builds" },
+                        // { value: "builds", label: "Builds" },
                         { value: "vault", label: "Vault" },
                         // { value: "database", label: "Database" },
                         // { value: "brand", label: "Brand" },
@@ -97,12 +97,14 @@ export default function Page() {
                 </TabsList>
                 <div className="bg-background rounded-b-lg shadow p-6 mt-3 text-foreground">
                     <TabsContent value="home">
-                        <p className='text-6xl'>{app?.name}</p>
-                        <p className='text-lg'>{app?.description}</p>
-
+                        <div className='m-auto py-3 text-center'>
+                            <p className='text-6xl font-bold'>{app?.name}</p>
+                            <p className='text-lg'>{app?.description}</p>
+                        </div>
+                        <hr />
                         <br />
 
-                        <div className='flex gap-8'>
+                        <div className='flex gap-8 m-auto w-[90%]'>
                             <Card
                                 onClick={() => setTab('todo')}
                                 className="bg-gradient-to-br w-[300px] from-accent to-card rounded-2xl p-6 border border-border shadow-lg cursor-pointer transition-transform hover:scale-105 hover:shadow-2xl flex flex-col justify-between min-h-[180px]">
@@ -140,13 +142,22 @@ export default function Page() {
                         </div>
                         <br />
                         <Card
-                            className="w-[screen] rounded-xl p-6 border border-border transition-transform  flex flex-col justify-between min-h-[180px]">
+                            className="w-[90%] m-auto rounded-xl p-6 border border-border transition-transform  flex flex-col justify-between min-h-[180px]">
                             <Bot size={48} />
                             <p className='text-4xl'>AI Features</p>
                             <p>Use AI features to make your flow efficient & save time!</p>
-                            <Button onClick={() => setTab('ai')} className='flex gap-4 text-center bg-gradient-to-br from-blue-600 to-indigo-800 hover:from-blue-700 hover:to-indigo-900 cursor-pointer w-[10%] p-5 text-white hover:w-[14%] '>AI Features <ArrowRight size={24} /></Button>
+                            <Button onClick={() => setTab('ai')} className='flex gap-4 text-center cursor-pointer w-[10%] p-5 hover:w-[14%] '>AI Features <ArrowRight size={24} /></Button>
                         </Card>
 
+                        <div className='w-[90%] m-auto bg-card p-4 my-4 rounded-2xl'>
+                            <AiPage />
+                        </div>
+
+                        <div className='w-[90%] m-auto'>
+                            <RepoBrowser installationId={installationId} githubRepo={githubRepo} app={app} />
+                        </div>
+
+                        <br />
                     </TabsContent>
                     <TabsContent value="todo">
                         <TodoContent />

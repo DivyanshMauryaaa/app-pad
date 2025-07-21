@@ -14,6 +14,8 @@ import { useState } from "react";
 import { Textarea } from "../ui/textarea";
 import supabase from "@/supabase/client";
 import { useUser } from "@clerk/nextjs";
+import { Card } from "../ui/card";
+import { PlusCircle } from "lucide-react";
 
 const AddAppDialog = () => {
     const [appName, setAppName] = useState('');
@@ -49,9 +51,10 @@ const AddAppDialog = () => {
     return (
         <Dialog>
             <DialogTrigger asChild>
-                <Button variant={'secondary'} className="cursor-pointer">
-                    New App
-                </Button>
+                <Card className="scale-75 flex flex-col cursor-pointer hover:scale-95 transition-all duration-200 items-center text-center">
+                    <PlusCircle size={150} className="text-accent" />
+                    <p className="text-accent text-6xl">Add New</p>
+                </Card>
             </DialogTrigger>
             <DialogContent>
                 <DialogHeader>

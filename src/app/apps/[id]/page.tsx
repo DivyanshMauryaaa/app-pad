@@ -80,6 +80,7 @@ export default function Page() {
                         { value: "vault", label: "Vault" },
                         { value: "ai", label: "AI" },
                         { value: "github", label: "Github" },
+                        { value: "settings", label: "Settings" }
                     ].map(tabItem => (
                         <TabsTrigger
                             key={tabItem.value}
@@ -165,9 +166,30 @@ export default function Page() {
                     <TabsContent value="documents">
                         <DocumentsPage />
                     </TabsContent>
-                    {/* <TabsContent value="builds">
-                        <BuildsPage />
-                    </TabsContent> */}
+                    <TabsContent value="settings">
+                        
+                    <div className="flex flex-col gap-6 max-w-xl mx-auto mt-8">
+                        <h2 className="text-3xl font-bold mb-2">Settings</h2>
+                        <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted">
+                            <span className="font-medium text-lg">Subscription Status</span>
+                            {app?.is_subscribed === "true" ? (
+                                <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-semibold">
+                                    Active
+                                </span>
+                            ) : (
+                                <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm font-semibold">
+                                    Inactive
+                                </span>
+                            )}
+                        </div>
+
+                        <div className='flex items-center justify-between p-4 rounded-lg border border-border bg-muted'>
+                            
+                        </div>
+                    </div>
+
+
+                    </TabsContent>
                     <TabsContent value="vault">
                         <Vault />
                     </TabsContent>

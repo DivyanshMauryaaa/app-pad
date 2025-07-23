@@ -17,14 +17,7 @@ export async function POST(req: NextRequest) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price_data: {
-            currency: 'usd',
-            product_data: {
-              name: 'PulsePatch Pro Subscription',
-            },
-            unit_amount: 1500,
-            recurring: { interval: 'month' },
-          },
+          price: "price_1RnIFGSHsqy7jhMiNtHxStZN",
           quantity: 1,
         },
       ],

@@ -48,7 +48,7 @@ export default function PricingPage() {
               <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Basic Tasks</li>
               <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Community Access</li>
             </ul>
-            <Button variant="outline" className="w-full">Get Started</Button>
+            {/* <Button variant="outline" className="w-full">Get Started</Button> */}
           </CardContent>
         </Card>
 
@@ -65,13 +65,13 @@ export default function PricingPage() {
               <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Priority Support</li>
               <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Team Collaboration</li>
             </ul>
-            <Button onClick={handleSubscribe} className="w-full bg-blue-600 hover:bg-blue-700 text-white">Upgrade to Pro</Button>
+            <Button onClick={handleSubscribe} disabled={isSubscribed === "true" ? true : false} className="w-full bg-blue-600 hover:bg-blue-700 text-white">Upgrade to Pro</Button>
           </CardContent>
         </Card>
       </div>
 
-      <div className="mt-8">
-          {isSubscribed === "true" ? <p className='text-green-600'>Active</p> : <p></p>}
+      <div className="mt-8 text-center">
+          {isSubscribed === "true" ? <p className='text-green-600'>Subscription Active</p> : <p></p>}
       </div>
 
     </div>

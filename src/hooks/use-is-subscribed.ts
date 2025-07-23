@@ -7,7 +7,7 @@ const supabase = createClient(
 );
 
 export function useIsSubscribed(appId: string) {
-  const [isSubscribed, setIsSubscribed] = useState<boolean | null>(null);
+  const [isSubscribed, setIsSubscribed] = useState<string | null>(null);
 
   useEffect(() => {
     if (!appId) return;

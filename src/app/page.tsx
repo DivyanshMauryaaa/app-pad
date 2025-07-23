@@ -42,7 +42,7 @@ export default function Home() {
       <div className="mt-6 space-y-4">
         {apps && apps.length > 0 ? (
           apps.map((app: any) => (
-            <Card key={app.id} className="scale-75 cursor-pointer bg-gradient-to-br from-muted to-card hover:scale-95 transition-all duration-200">
+            <Card key={app.id} className="scale-75 cursor-pointer bg-gradient-to-br from-muted to-card hover:scale-80 transition-all duration-200">
               <CardHeader>
                 <CardTitle className="text-6xl hover:underline cursor-pointer font-normal">
                   <Link href={`/apps/${app.id}`} className="flex gap-2">

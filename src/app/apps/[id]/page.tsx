@@ -10,11 +10,11 @@ import BugsPage from './bugs/page';
 import DocumentsPage from './documents/page';
 import DatabasePage from './database/page';
 import Vault from './vault/page';
-import BuildsPage from './builds/page';
+// import BuildsPage from './builds/page';
 import AppBranding from './brand/page';
 import AiPage from './ai/page';
 import { Card, CardHeader } from '@/components/ui/card';
-import { ArrowRight, Bot, Bug, CheckCircle2, FileIcon, GithubIcon, KeyRoundIcon } from 'lucide-react';
+import { ArrowRight, Bot, Bug, CheckCircle2, FileIcon, GithubIcon, KeyRoundIcon, Sparkles } from 'lucide-react';
 import RepoBrowser from '@/app/repo/page';
 import { Button } from '@/components/ui/button';
 
@@ -71,16 +71,13 @@ export default function Page() {
             <p className='text-5xl mb-8'>{app?.name}</p>
 
             <Tabs value={tab} onValueChange={setTab} className="w-full mx-auto mt-8">
-                <TabsList className="flex bg-background rounded-lg shadow p-1 gap-2 max-w-3xl border border-border">
+                <TabsList className="flex bg-background rounded-lg shadow p-1 gap-2 m-auto max-w-4xl border border-border">
                     {[
                         { value: "home", label: "Home" },
                         { value: "todo", label: "Todo" },
                         { value: "bugs", label: "Bugs" },
                         { value: "documents", label: "Documents" },
-                        // { value: "builds", label: "Builds" },
                         { value: "vault", label: "Vault" },
-                        // { value: "database", label: "Database" },
-                        // { value: "brand", label: "Brand" },
                         { value: "ai", label: "AI" },
                         { value: "github", label: "Github" },
                     ].map(tabItem => (
@@ -143,7 +140,7 @@ export default function Page() {
                         <br />
                         <Card
                             className="w-[90%] m-auto rounded-xl p-6 border border-border transition-transform  flex flex-col justify-between min-h-[180px]">
-                            <Bot size={48} />
+                            <Sparkles size={48} />
                             <p className='text-4xl'>AI Features</p>
                             <p>Use AI features to make your flow efficient & save time!</p>
                             <Button onClick={() => setTab('ai')} className='flex gap-4 text-center cursor-pointer w-[10%] p-5 hover:w-[14%] '>AI Features <ArrowRight size={24} /></Button>
@@ -168,9 +165,9 @@ export default function Page() {
                     <TabsContent value="documents">
                         <DocumentsPage />
                     </TabsContent>
-                    <TabsContent value="builds">
+                    {/* <TabsContent value="builds">
                         <BuildsPage />
-                    </TabsContent>
+                    </TabsContent> */}
                     <TabsContent value="vault">
                         <Vault />
                     </TabsContent>

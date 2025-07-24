@@ -9,9 +9,6 @@ import { fetchAllRepoFilesWithContent } from '@/lib/github';
 export async function POST(req: NextRequest) {
   try {
     const { description, file_path, owner, repo, installationId, app_id, user_id } = await req.json();
-    if (!description || typeof description !== 'string') {
-      return NextResponse.json({ error: 'Missing or invalid description' }, { status: 400 });
-    }
 
     // Add repo context to the AI prompt
     let repoContext = '';
@@ -50,7 +47,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Given the following bug or issue, generate a detailed bug report as a JSON object with \"title\", \"description\", \"severity\", and optionally \"line_number\". Be concise but clear. Bug: ${description}${repoContext}`
+            text: `Given the following bug or issue, generate a detailed bug report as a JSON object with \"title\", \"description\", \"severity\", and optionally \"line_number\". Be concise but clear. Bug: ${description}${repoContext} Give it to me in a structured form, don't mess it up`
           }]
         }]
       })

@@ -139,13 +139,15 @@ export default function Page() {
                             </Card>
                         </div>
                         <br />
-                        <Card
-                            className="w-[90%] m-auto rounded-xl p-6 border border-border transition-transform  flex flex-col justify-between min-h-[180px]">
-                            <Sparkles size={48} />
-                            <p className='text-4xl'>AI Features</p>
-                            <p>Use AI features to make your flow efficient & save time!</p>
-                            <Button onClick={() => setTab('ai')} className='flex gap-4 text-center cursor-pointer w-[10%] p-5 hover:w-[14%] '>AI Features <ArrowRight size={24} /></Button>
-                        </Card>
+                        {app.is_subscribed === "false" && (
+                            <Card
+                                className="w-[90%] m-auto rounded-xl p-6 border border-border transition-transform  flex flex-col justify-between min-h-[180px]">
+                                <Sparkles size={48} />
+                                <p className='text-4xl'>Get the best out of PulsePatch!</p>
+                                <p>Upgrade to Pro to unlock all features!</p>
+                                <Button onClick={() => setTab('settings')} className='flex gap-4 text-center cursor-pointer w-[10%] p-5 hover:w-[14%] '>Upgrade <ArrowRight size={24} /></Button>
+                            </Card>
+                        )}
 
                         <div className='w-[90%] m-auto bg-card p-4 my-4 rounded-2xl'>
                             <AiPage />
@@ -167,26 +169,26 @@ export default function Page() {
                         <DocumentsPage />
                     </TabsContent>
                     <TabsContent value="settings">
-                        
-                    <div className="flex flex-col gap-6 max-w-xl mx-auto mt-8">
-                        <h2 className="text-3xl font-bold mb-2">Settings</h2>
-                        <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted">
-                            <span className="font-medium text-lg">Subscription Status</span>
-                            {app?.is_subscribed === "true" ? (
-                                <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-semibold">
-                                    Active
-                                </span>
-                            ) : (
-                                <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm font-semibold">
-                                    Inactive
-                                </span>
-                            )}
-                        </div>
 
-                        <div className='flex items-center justify-between p-4 rounded-lg border border-border bg-muted'>
-                            
+                        <div className="flex flex-col gap-6 max-w-xl mx-auto mt-8">
+                            <h2 className="text-3xl font-bold mb-2">Settings</h2>
+                            <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted">
+                                <span className="font-medium text-lg">Subscription Status</span>
+                                {app?.is_subscribed === "true" ? (
+                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-semibold">
+                                        Active
+                                    </span>
+                                ) : (
+                                    <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm font-semibold">
+                                        Inactive
+                                    </span>
+                                )}
+                            </div>
+
+                            <div className='flex items-center justify-between p-4 rounded-lg border border-border bg-muted'>
+
+                            </div>
                         </div>
-                    </div>
 
 
                     </TabsContent>

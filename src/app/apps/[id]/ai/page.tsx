@@ -16,6 +16,7 @@ import { Save, Loader2, ListChecks, FileText, Bug, Code, MessageCircle, Download
 import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import MdRenderer from '@/components/mdrenderer';
+import { useIsSubscribed } from '@/hooks/use-is-subscribed';
 
 type TodoList = {
   id: string;
@@ -84,6 +85,19 @@ const AiPage = () => {
   const params = useParams();
   const appId = params.id as string;
   const { user } = useUser();
+  const isSubscribed = useIsSubscribed(appId); // 'true' for Pro, else Free
+
+  // Context Options State
+  const [useGithubContext, setUseGithubContext] = useState(true);
+  const [githubFileLimit, setGithubFileLimit] = useState(20); // default for Free
+  const [githubLineLimit, setGithubLineLimit] = useState(1000); // default for Free
+  const [includePRs, setIncludePRs] = useState(false);
+  const [includeCommits, setIncludeCommits] = useState(false);
+  const [prLimit, setPrLimit] = useState(2); // default for Free
+  const [commitLimit, setCommitLimit] = useState(5); // default for Free
+  const [allFiles, setAllFiles] = useState(false); // Pro only
+  const [allPRs, setAllPRs] = useState(false); // Pro only
+  const [allCommits, setAllCommits] = useState(false); // Pro only
 
   // Repository data
   const [installationId, setInstallationId] = useState('');
@@ -187,6 +201,21 @@ const AiPage = () => {
     installationId: installationId
   };
 
+  // Place contextOptions here, after all state and functions
+  const contextOptions = {
+    useGithubContext,
+    githubFileLimit: allFiles ? 'all' : githubFileLimit,
+    githubLineLimit,
+    includePRs,
+    prLimit: allPRs ? 'all' : prLimit,
+    includeCommits,
+    commitLimit: allCommits ? 'all' : commitLimit,
+    allFiles,
+    allPRs,
+    allCommits,
+    isPro: isSubscribed === 'true',
+  };
+
   useEffect(() => {
     if (appId) {
       fetchTodoLists();
@@ -281,7 +310,8 @@ const AiPage = () => {
           prompt,
           ...repoParams,
           app_id: appId,
-          user_id: user?.id || null
+          user_id: user?.id || null,
+          ...contextOptions,
         })
       });
 
@@ -330,7 +360,8 @@ const AiPage = () => {
           prompt: docPrompt,
           ...repoParams,
           app_id: appId,
-          user_id: user?.id || null
+          user_id: user?.id || null,
+          ...contextOptions,
         })
       });
 
@@ -353,11 +384,7 @@ const AiPage = () => {
   };
 
   const generateBugReport = async () => {
-    if (!bugDescription.trim()) {
-      toast.error('Please describe the bug or issue');
-      return;
-    }
-
+    // Allow empty description, scan repo if empty
     setIsGeneratingBugs(true);
     try {
       const response = await fetch('/api/ai/report-bugs', {
@@ -366,11 +393,12 @@ const AiPage = () => {
           'Content-Type': 'application/json',
         },
         body: JSON.stringify({
-          description: bugDescription,
+          description: bugDescription, // can be empty
           file_path: bugFilePath,
           ...repoParams,
           app_id: appId,
-          user_id: user?.id || null
+          user_id: user?.id || null,
+          ...contextOptions,
         })
       });
 
@@ -421,7 +449,8 @@ const AiPage = () => {
         repo,
         installationId,
         app_id: appId,
-        user_id: user?.id || null
+        user_id: user?.id || null,
+        ...contextOptions,
       };
       if (reviewCode && reviewCode.trim()) {
         body.code = reviewCode;
@@ -472,17 +501,8 @@ const AiPage = () => {
   const sendChatMessage = async () => {
     if (!chatInput.trim()) return;
 
-    const userMessage: ChatMessage = {
-      id: Date.now().toString(),
-      role: 'user',
-      content: chatInput,
-      timestamp: new Date().toISOString()
-    };
-
-    setChatMessages(prev => [...prev, userMessage]);
-    setChatInput('');
+    // Only one-shot, no follow-up, no chat history
     setIsChatLoading(true);
-
     try {
       const response = await fetch('/api/ai/chat', {
         method: 'POST',
@@ -491,13 +511,14 @@ const AiPage = () => {
         },
         body: JSON.stringify({
           message: chatInput,
-          history: chatMessages,
+          // history: chatMessages, // REMOVE history for one-shot
           repoContext,
           owner,
           repo,
           installationId,
           app_id: appId,
-          user_id: user?.id || null
+          user_id: user?.id || null,
+          ...contextOptions,
         })
       });
 
@@ -662,6 +683,111 @@ const AiPage = () => {
 
   return (
     <div className="py-4">
+      {/* Context Options UI */}
+      <Card className="mb-6">
+        <CardHeader>
+          <CardTitle>AI Context Options</CardTitle>
+          <CardDescription>
+            Customize what project context is used for all AI features. (Pro users can select more options)
+          </CardDescription>
+        </CardHeader>
+        <CardContent>
+          <div className="flex flex-col gap-4">
+            <div className="flex items-center gap-2">
+              <Checkbox checked={useGithubContext} onCheckedChange={checked => setUseGithubContext(!!checked)} id="use-github-context" />
+              <Label htmlFor="use-github-context">Use GitHub context?</Label>
+            </div>
+            {useGithubContext && (
+              <div className="flex flex-col gap-3 pl-6">
+                <div className="flex items-center gap-2">
+                  <Label>Files:</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={allFiles ? 9999 : (isSubscribed === 'true' ? 9999 : 20)}
+                    value={allFiles ? '' : githubFileLimit}
+                    onChange={e => setGithubFileLimit(Number(e.target.value))}
+                    disabled={isSubscribed !== 'true'}
+                    placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 20'}
+                    style={{ width: 80 }}
+                  />
+                  {isSubscribed === 'true' && (
+                    <div className="flex items-center gap-1">
+                      <Checkbox checked={allFiles} onCheckedChange={checked => setAllFiles(!!checked)} id="all-files" />
+                      <Label htmlFor="all-files">All</Label>
+                    </div>
+                  )}
+                  {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 20 max)</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Label>Lines per file:</Label>
+                  <Input
+                    type="number"
+                    min={1}
+                    max={allFiles ? 99999 : (isSubscribed === 'true' ? 99999 : 1000)}
+                    value={allFiles ? '' : githubLineLimit}
+                    onChange={e => setGithubLineLimit(Number(e.target.value))}
+                    disabled={isSubscribed !== 'true'}
+                    placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 1000'}
+                    style={{ width: 100 }}
+                  />
+                  {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 1000 max)</span>}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox checked={includePRs} onCheckedChange={checked => setIncludePRs(!!checked)} id="include-prs" />
+                  <Label htmlFor="include-prs">Include Pull Requests?</Label>
+                  {includePRs && (
+                    <>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={allPRs ? 999 : (isSubscribed === 'true' ? 999 : 2)}
+                        value={allPRs ? '' : prLimit}
+                        onChange={e => setPrLimit(Number(e.target.value))}
+                        disabled={isSubscribed !== 'true'}
+                        placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 2'}
+                        style={{ width: 80 }}
+                      />
+                      {isSubscribed === 'true' && (
+                        <div className="flex items-center gap-1">
+                          <Checkbox checked={allPRs} onCheckedChange={checked => setAllPRs(!!checked)} id="all-prs" />
+                          <Label htmlFor="all-prs">All</Label>
+                        </div>
+                      )}
+                      {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 2 max)</span>}
+                    </>
+                  )}
+                </div>
+                <div className="flex items-center gap-2">
+                  <Checkbox checked={includeCommits} onCheckedChange={checked => setIncludeCommits(!!checked)} id="include-commits" />
+                  <Label htmlFor="include-commits">Include Commits?</Label>
+                  {includeCommits && (
+                    <>
+                      <Input
+                        type="number"
+                        min={1}
+                        max={allCommits ? 999 : (isSubscribed === 'true' ? 999 : 5)}
+                        value={allCommits ? '' : commitLimit}
+                        onChange={e => setCommitLimit(Number(e.target.value))}
+                        disabled={isSubscribed !== 'true'}
+                        placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 5'}
+                        style={{ width: 80 }}
+                      />
+                      {isSubscribed === 'true' && (
+                        <div className="flex items-center gap-1">
+                          <Checkbox checked={allCommits} onCheckedChange={checked => setAllCommits(!!checked)} id="all-commits" />
+                          <Label htmlFor="all-commits">All</Label>
+                        </div>
+                      )}
+                      {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 5 max)</span>}
+                    </>
+                  )}
+                </div>
+              </div>
+            )}
+          </div>
+        </CardContent>
+      </Card>
       <h1 className="text-3xl font-bold mb-6">AI Features</h1>
       <Tabs defaultValue="todo-gen" className="w-full">
         <TabsList className="mb-6">
@@ -937,15 +1063,18 @@ const AiPage = () => {
                     </CardHeader>
                     <CardContent>
                       <div className="mb-2">
-                        <strong>Suggestions:</strong>
+                        <p className="text-center text-2xl font-bold">Suggestions</p>
+                        <br />
                         <MdRenderer content={review.suggestions} />
                       </div>
                       <div className="mb-2">
-                        <strong>Issues:</strong>
+                        <p className="text-center text-2xl font-bold text-red-600">Issues</p>
+                        <br />
                         <MdRenderer content={Array.isArray(review.issues) ? review.issues.join('\n') : review.issues} />
                       </div>
                       <div className="mb-2">
-                        <strong>Improvements:</strong>
+                        <p className="text-center text-2xl font-bold text-green-600">Improvements</p>
+                        <br />
                         <MdRenderer content={Array.isArray(review.improvements) ? review.improvements.join('\n') : review.improvements} />
                       </div>
                     </CardContent>

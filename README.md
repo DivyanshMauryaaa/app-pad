@@ -1,12 +1,12 @@
-# FixFlow 🚀 (in development, not all features are available to use)
+# Pulsepatch 🚀 (in development, not all features are available to use)
 
 **The central control panel for your software business - where code meets clarity.**
 
-FixFlow is an AI-powered platform that helps developers and indie makers manage everything around their software business. From auto-generating documentation to breaking down complex milestones, FixFlow keeps you focused on building while handling the business side seamlessly.
+Pulsepatch is an AI-powered platform that helps developers and indie makers manage everything around their software business. From auto-generating documentation to breaking down complex milestones, FixFlow keeps you focused on building while handling the business side seamlessly.
 
 ---
 
-## 🎯 What Problem Does FixFlow Solve?
+## 🎯 What Problem Does PulsePatch Solve?
 
 Ever found yourself juggling 10 different tools just to manage one project? Spending hours writing documentation that gets outdated instantly? Struggling to explain technical progress to non-technical clients? 
 

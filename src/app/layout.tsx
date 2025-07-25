@@ -23,8 +23,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Pipe',
-  description: '',
+  title: 'Pulsepatch',
+  description: 'Pulsepatch is a platform for creating and managing your apps\' codebase.',
 }
 
 export default function RootLayout({

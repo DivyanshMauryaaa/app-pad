@@ -19,6 +19,7 @@ import RepoBrowser from '@/app/repo/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
+import Link from 'next/link';
 
 export default function Page() {
     const params = useParams();
@@ -30,8 +31,8 @@ export default function Page() {
     const [installationId, setInstallationId] = useState('');
     const [githubRepo, setGithubRepo] = useState('');
 
-    const [appName, setAppName] = useState(app?.name);
-    const [appDescription, setAppDescription] = useState(app?.description);
+    const [appName, setAppName] = useState("");
+    const [appDescription, setAppDescription] = useState("");
 
     const getAppData = async () => {
         const { data, error } = await supabase.from('apps')
@@ -62,6 +63,14 @@ export default function Page() {
                 });
         }
     }, [id]);
+
+    // Set appName and appDescription when app is loaded
+    useEffect(() => {
+        if (app) {
+            setAppName(app.name || "");
+            setAppDescription(app.description || "");
+        }
+    }, [app]);
 
     if (loading) {
         return (
@@ -184,9 +193,18 @@ export default function Page() {
                                         Active
                                     </span>
                                 ) : (
-                                    <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm font-semibold w-fit">
-                                        Inactive
-                                    </span>
+                                    <div className=''>
+                                        <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm font-semibold w-fit">
+                                            Inactive
+                                        </span>
+                                        <br /><br />
+                                        <Link href={`/apps/${id}/pricing`} className=''>
+                                            <Button variant={'default'} size="icon" aria-label="Delete app" className="w-full cursor-pointer">
+                                                Upgrade <ArrowRight size={24} />
+                                            </Button>
+                                        </Link>
+
+                                    </div>
                                 )}
                             </Card>
                             {/* App Info */}
@@ -196,14 +214,6 @@ export default function Page() {
                                     <label className="text-sm font-semibold">App Name</label>
                                     <Input
                                         value={appName}
-                                        onBlur={async (e) => {
-                                            if (e.target.value === app?.name) return;
-                                            const { data, error } = await supabase.from('apps')
-                                                .update({ name: e.target.value })
-                                                .eq('id', id)
-                                                .single();
-                                            setAppName(e.target.value);
-                                        }}
                                         onChange={(e) => setAppName(e.target.value)}
                                         className="max-w-md"
                                     />
@@ -212,18 +222,26 @@ export default function Page() {
                                     <label className="text-sm font-semibold">App Description</label>
                                     <Textarea
                                         value={appDescription}
-                                        onBlur={async (e) => {
-                                            if (e.target.value === app?.description) return;
-                                            const { data, error } = await supabase.from('apps')
-                                                .update({ description: e.target.value })
-                                                .eq('id', id)
-                                                .single();
-                                            setAppDescription(e.target.value);
-                                        }}
                                         onChange={(e) => setAppDescription(e.target.value)}
                                         className="max-w-md min-h-[80px]"
                                     />
                                 </div>
+                                <Button
+                                    className="w-fit mt-2"
+                                    onClick={async () => {
+                                        const { data, error } = await supabase.from('apps')
+                                            .update({ name: appName, description: appDescription })
+                                            .eq('id', id)
+                                            .single();
+                                        if (error) {
+                                            alert(error.message + error.cause);
+                                        } else {
+                                            setApp((prev: any) => ({ ...prev, name: appName, description: appDescription }));
+                                        }
+                                    }}
+                                >
+                                    Save
+                                </Button>
                             </Card>
                             {/* Github Info */}
                             <Card className="p-6 flex flex-col gap-2">

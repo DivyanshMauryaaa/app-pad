@@ -8,6 +8,7 @@ interface RepoDataOptions {
 }
 
 interface FileContent {
+  sha: string;
   name: string;
   path: string;
   type: string;

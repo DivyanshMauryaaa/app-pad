@@ -17,6 +17,7 @@ import { toast } from "sonner";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
 import MdRenderer from '@/components/mdrenderer';
 import { useIsSubscribed } from '@/hooks/use-is-subscribed';
+import PricingDialog from '@/app/components/PricingDialog';
 
 type TodoList = {
   id: string;
@@ -167,7 +168,7 @@ const AiPage = () => {
 
       if (error) {
         console.error('Error fetching app repo data:', error);
-        toast.error(`Failed to fetch app repo data. ${error.cause + error.message + error.name}` );
+        toast.error(`Failed to fetch app repo data. ${error.cause + error.message + error.name}`);
         return;
       }
 
@@ -293,7 +294,24 @@ const AiPage = () => {
     }
   };
 
+  const [showPricing, setShowPricing] = useState(false);
+
+  // Helper to check AI usage
+  const checkAIUsage = async () => {
+    if (isSubscribed === 'true') return true;
+    const res = await fetch('/api/ai/check-usage', {
+      method: 'POST',
+      headers: { 'Content-Type': 'application/json' },
+      body: JSON.stringify({ app_id: appId, user_id: user?.id })
+    });
+    const data = await res.json();
+    if (data.allowed) return true;
+    setShowPricing(true);
+    return false;
+  };
+
   const generateTodos = async () => {
+    if (!await checkAIUsage()) return;
     if (!prompt.trim()) {
       toast.error('Please enter a feature description');
       return;
@@ -344,6 +362,7 @@ const AiPage = () => {
   };
 
   const generateDocument = async () => {
+    if (!await checkAIUsage()) return;
     if (!docPrompt.trim()) {
       toast.error('Please enter a document description');
       return;
@@ -384,6 +403,7 @@ const AiPage = () => {
   };
 
   const generateBugReport = async () => {
+    if (!await checkAIUsage()) return;
     // Allow empty description, scan repo if empty
     setIsGeneratingBugs(true);
     try {
@@ -407,7 +427,7 @@ const AiPage = () => {
       }
 
       const data = await response.json();
-      
+
       // Save bug report to database
       const { data: savedBug, error } = await supabase
         .from('bugs')
@@ -440,6 +460,7 @@ const AiPage = () => {
   };
 
   const generateCodeReview = async () => {
+    if (!await checkAIUsage()) return;
     setIsGeneratingReview(true);
     try {
       const body: any = {
@@ -499,6 +520,7 @@ const AiPage = () => {
   };
 
   const sendChatMessage = async () => {
+    if (!await checkAIUsage()) return;
     if (!chatInput.trim()) return;
 
     // Only one-shot, no follow-up, no chat history
@@ -527,7 +549,7 @@ const AiPage = () => {
       }
 
       const data = await response.json();
-      
+
       const assistantMessage: ChatMessage = {
         id: (Date.now() + 1).toString(),
         role: 'assistant',
@@ -683,120 +705,121 @@ const AiPage = () => {
 
   return (
     <div className="py-4">
-      {/* Context Options UI */}
-      <Card className="mb-6">
-        <CardHeader>
-          <CardTitle>AI Context Options</CardTitle>
-          <CardDescription>
-            Customize what project context is used for all AI features. (Pro users can select more options)
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="flex flex-col gap-4">
-            <div className="flex items-center gap-2">
-              <Checkbox checked={useGithubContext} onCheckedChange={checked => setUseGithubContext(!!checked)} id="use-github-context" />
-              <Label htmlFor="use-github-context">Use GitHub context?</Label>
-            </div>
-            {useGithubContext && (
-              <div className="flex flex-col gap-3 pl-6">
-                <div className="flex items-center gap-2">
-                  <Label>Files:</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={allFiles ? 9999 : (isSubscribed === 'true' ? 9999 : 20)}
-                    value={allFiles ? '' : githubFileLimit}
-                    onChange={e => setGithubFileLimit(Number(e.target.value))}
-                    disabled={isSubscribed !== 'true'}
-                    placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 20'}
-                    style={{ width: 80 }}
-                  />
-                  {isSubscribed === 'true' && (
-                    <div className="flex items-center gap-1">
-                      <Checkbox checked={allFiles} onCheckedChange={checked => setAllFiles(!!checked)} id="all-files" />
-                      <Label htmlFor="all-files">All</Label>
-                    </div>
-                  )}
-                  {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 20 max)</span>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Label>Lines per file:</Label>
-                  <Input
-                    type="number"
-                    min={1}
-                    max={allFiles ? 99999 : (isSubscribed === 'true' ? 99999 : 1000)}
-                    value={allFiles ? '' : githubLineLimit}
-                    onChange={e => setGithubLineLimit(Number(e.target.value))}
-                    disabled={isSubscribed !== 'true'}
-                    placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 1000'}
-                    style={{ width: 100 }}
-                  />
-                  {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 1000 max)</span>}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={includePRs} onCheckedChange={checked => setIncludePRs(!!checked)} id="include-prs" />
-                  <Label htmlFor="include-prs">Include Pull Requests?</Label>
-                  {includePRs && (
-                    <>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={allPRs ? 999 : (isSubscribed === 'true' ? 999 : 2)}
-                        value={allPRs ? '' : prLimit}
-                        onChange={e => setPrLimit(Number(e.target.value))}
-                        disabled={isSubscribed !== 'true'}
-                        placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 2'}
-                        style={{ width: 80 }}
-                      />
-                      {isSubscribed === 'true' && (
-                        <div className="flex items-center gap-1">
-                          <Checkbox checked={allPRs} onCheckedChange={checked => setAllPRs(!!checked)} id="all-prs" />
-                          <Label htmlFor="all-prs">All</Label>
-                        </div>
-                      )}
-                      {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 2 max)</span>}
-                    </>
-                  )}
-                </div>
-                <div className="flex items-center gap-2">
-                  <Checkbox checked={includeCommits} onCheckedChange={checked => setIncludeCommits(!!checked)} id="include-commits" />
-                  <Label htmlFor="include-commits">Include Commits?</Label>
-                  {includeCommits && (
-                    <>
-                      <Input
-                        type="number"
-                        min={1}
-                        max={allCommits ? 999 : (isSubscribed === 'true' ? 999 : 5)}
-                        value={allCommits ? '' : commitLimit}
-                        onChange={e => setCommitLimit(Number(e.target.value))}
-                        disabled={isSubscribed !== 'true'}
-                        placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 5'}
-                        style={{ width: 80 }}
-                      />
-                      {isSubscribed === 'true' && (
-                        <div className="flex items-center gap-1">
-                          <Checkbox checked={allCommits} onCheckedChange={checked => setAllCommits(!!checked)} id="all-commits" />
-                          <Label htmlFor="all-commits">All</Label>
-                        </div>
-                      )}
-                      {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 5 max)</span>}
-                    </>
-                  )}
-                </div>
-              </div>
-            )}
-          </div>
-        </CardContent>
-      </Card>
       <h1 className="text-3xl font-bold mb-6">AI Features</h1>
       <Tabs defaultValue="todo-gen" className="w-full">
-        <TabsList className="mb-6">
-          <TabsTrigger value="todo-gen">Todo Generator</TabsTrigger>
-          <TabsTrigger value="document-gen">Document Generator</TabsTrigger>
-          <TabsTrigger value="bug-gen">Bug Reporter</TabsTrigger>
-          <TabsTrigger value="code-review">Code Review</TabsTrigger>
-          <TabsTrigger value="pulseai-chat">PulseAI Chat</TabsTrigger>
+        <TabsList className="mb-6 bg-transparent">
+          <TabsTrigger value="todo-gen" className="p-5">Todo Generator</TabsTrigger>
+          <TabsTrigger value="document-gen" className="p-5">Document Generator</TabsTrigger>
+          <TabsTrigger value="bug-gen" className="p-5">Bug Reporter</TabsTrigger>
+          <TabsTrigger value="code-review" className="p-5">Code Review</TabsTrigger>
+          <TabsTrigger value="pulseai-chat" className="p-5">PulseAI Chat</TabsTrigger>
         </TabsList>
+
+        {/* Context Options UI */}
+        <Card className="mb-6">
+          <CardHeader>
+            <CardTitle>AI Context Options</CardTitle>
+            <CardDescription>
+              Customize what project context is used for all AI features. (Pro users can select more options)
+            </CardDescription>
+          </CardHeader>
+          <CardContent>
+            <div className="flex flex-col gap-4">
+              <div className="flex items-center gap-2">
+                <Checkbox checked={useGithubContext} onCheckedChange={checked => setUseGithubContext(!!checked)} id="use-github-context" />
+                <Label htmlFor="use-github-context">Use GitHub context?</Label>
+              </div>
+              {useGithubContext && (
+                <div className="flex flex-col gap-3 pl-6">
+                  <div className="flex items-center gap-2">
+                    <Label>Files:</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={allFiles ? 9999 : (isSubscribed === 'true' ? 9999 : 20)}
+                      value={allFiles ? '' : githubFileLimit}
+                      onChange={e => setGithubFileLimit(Number(e.target.value))}
+                      disabled={isSubscribed !== 'true'}
+                      placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 20'}
+                      style={{ width: 80 }}
+                    />
+                    {isSubscribed === 'true' && (
+                      <div className="flex items-center gap-1">
+                        <Checkbox checked={allFiles} onCheckedChange={checked => setAllFiles(!!checked)} id="all-files" />
+                        <Label htmlFor="all-files">All</Label>
+                      </div>
+                    )}
+                    {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 20 max)</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Label>Lines per file:</Label>
+                    <Input
+                      type="number"
+                      min={1}
+                      max={allFiles ? 99999 : (isSubscribed === 'true' ? 99999 : 1000)}
+                      value={allFiles ? '' : githubLineLimit}
+                      onChange={e => setGithubLineLimit(Number(e.target.value))}
+                      disabled={isSubscribed !== 'true'}
+                      placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 1000'}
+                      style={{ width: 100 }}
+                    />
+                    {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 1000 max)</span>}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox checked={includePRs} onCheckedChange={checked => setIncludePRs(!!checked)} id="include-prs" />
+                    <Label htmlFor="include-prs">Include Pull Requests?</Label>
+                    {includePRs && (
+                      <>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={allPRs ? 999 : (isSubscribed === 'true' ? 999 : 2)}
+                          value={allPRs ? '' : prLimit}
+                          onChange={e => setPrLimit(Number(e.target.value))}
+                          disabled={isSubscribed !== 'true'}
+                          placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 2'}
+                          style={{ width: 80 }}
+                        />
+                        {isSubscribed === 'true' && (
+                          <div className="flex items-center gap-1">
+                            <Checkbox checked={allPRs} onCheckedChange={checked => setAllPRs(!!checked)} id="all-prs" />
+                            <Label htmlFor="all-prs">All</Label>
+                          </div>
+                        )}
+                        {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 2 max)</span>}
+                      </>
+                    )}
+                  </div>
+                  <div className="flex items-center gap-2">
+                    <Checkbox checked={includeCommits} onCheckedChange={checked => setIncludeCommits(!!checked)} id="include-commits" />
+                    <Label htmlFor="include-commits">Include Commits?</Label>
+                    {includeCommits && (
+                      <>
+                        <Input
+                          type="number"
+                          min={1}
+                          max={allCommits ? 999 : (isSubscribed === 'true' ? 999 : 5)}
+                          value={allCommits ? '' : commitLimit}
+                          onChange={e => setCommitLimit(Number(e.target.value))}
+                          disabled={isSubscribed !== 'true'}
+                          placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 5'}
+                          style={{ width: 80 }}
+                        />
+                        {isSubscribed === 'true' && (
+                          <div className="flex items-center gap-1">
+                            <Checkbox checked={allCommits} onCheckedChange={checked => setAllCommits(!!checked)} id="all-commits" />
+                            <Label htmlFor="all-commits">All</Label>
+                          </div>
+                        )}
+                        {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 5 max)</span>}
+                      </>
+                    )}
+                  </div>
+                </div>
+              )}
+            </div>
+          </CardContent>
+        </Card>
 
         {/* Todo Generator Tab */}
         <TabsContent value="todo-gen">
@@ -1013,7 +1036,7 @@ const AiPage = () => {
                 <Button onClick={generateBugReport} disabled={isGeneratingBugs}>
                   {isGeneratingBugs ? (
                     <Loader2 className="mr-2 h-4 w-4 animate-spin" />
-                    ) : (
+                  ) : (
                     <Bug className="mr-2 h-4 w-4" />
                   )}
                   Scan
@@ -1110,7 +1133,7 @@ const AiPage = () => {
                 <div className="flex-1 overflow-y-auto pr-4 mb-2" style={{ minHeight: 0 }}>
                   {chatMessages.map((msg) => (
                     <div key={msg.id} className={`flex border-none shadow-none ${msg.role === 'user' ? 'justify-end' : 'justify-start'}`}>
-                      <div className={`p-3 rounded-lg ${msg.role === 'user' ? 'bg-primary text-white' : ''}`}> 
+                      <div className={`p-3 rounded-lg ${msg.role === 'user' ? 'bg-primary text-white' : ''}`}>
                         {msg.role === 'assistant' ? (
                           <MdRenderer content={msg.content} />
                         ) : (
@@ -1159,6 +1182,7 @@ const AiPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
+      <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId} />
     </div>
   );
 };

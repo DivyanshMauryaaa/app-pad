@@ -10,6 +10,8 @@ import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/com
 import { Badge } from '@/components/ui/badge';
 import { Progress } from '@/components/ui/progress';
 import { Plus, Trash2, Edit2, CheckCircle2 } from 'lucide-react';
+import PricingDialog from '@/app/components/PricingDialog';
+import { useIsSubscribed } from "@/hooks/use-is-subscribed"
 
 const statusColors: Record<string, string> = {
   pending: 'bg-yellow-100 text-yellow-800',
@@ -37,6 +39,9 @@ const TodoContent = () => {
     const [editingTodoId, setEditingTodoId] = useState<string | null>(null);
     const [editingTodoName, setEditingTodoName] = useState('');
     const [editingTodoDesc, setEditingTodoDesc] = useState('');
+
+    // Pricing dialog state
+    const [showPricing, setShowPricing] = useState(false);
 
     // Fetch all todo lists for this app
     const fetchLists = async () => {
@@ -76,6 +81,10 @@ const TodoContent = () => {
 
     // Add a new todo list
     const addList = async () => {
+        if (!isPro && lists.length >= 3) {
+            setShowPricing(true);
+            return;
+        }
         if (!newListName) return;
         const { data, error } = await supabase.from('todo_lists').insert(
             {
@@ -92,6 +101,13 @@ const TodoContent = () => {
     // Add a new todo
     const addTodo = async () => {
         if (!selectedList || !newTodoName) return;
+        if (!isPro) {
+            const todosInList = allTodos.filter(t => t.list_id === selectedList);
+            if (todosInList.length >= 10) {
+                setShowPricing(true);
+                return;
+            }
+        }
         const { data, error } = await supabase.from('todos').insert({
             app_id: appId,
             list_id: selectedList,
@@ -145,6 +161,8 @@ const TodoContent = () => {
         const completed = listTodos.filter((t: any) => t.status === 'completed').length;
         return Math.round((completed / listTodos.length) * 100);
     };
+
+    const isPro = useIsSubscribed(appId) === 'true';
 
     useEffect(() => {
         if (appId) fetchLists();
@@ -334,6 +352,7 @@ const TodoContent = () => {
                     )}
                 </div>
             </div>
+            <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId} />
         </div>
     )
 }

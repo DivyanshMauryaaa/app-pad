@@ -8,11 +8,11 @@ import { useParams } from 'next/navigation';
 import { useUser } from '@clerk/nextjs';
 import { CheckCircle } from 'lucide-react';
 
-export default function PricingPage() {
+export default function PricingPage({ appId }: { appId: string }) {
   const params = useParams();
 
   const APP_ID_PARAM = params.id;
-  const APP_ID = APP_ID_PARAM?.toString() ?? '';
+  const APP_ID = APP_ID_PARAM?.toString() ?? appId;
   const isSubscribed = useIsSubscribed(APP_ID);
   const [loading, setLoading] = useState(false);
   const { user } = useUser();

@@ -11,6 +11,8 @@ import { Textarea } from "@/components/ui/textarea";
 import { Select, SelectTrigger, SelectContent, SelectItem, SelectValue } from "@/components/ui/select";
 import { Pencil, Trash2, Bug, AlertTriangle } from "lucide-react";
 import { Checkbox } from "@/components/ui/checkbox";
+import PricingDialog from '@/app/components/PricingDialog';
+import { useIsSubscribed } from "@/hooks/use-is-subscribed";
 
 const BugsPage = () => {
     const [bugs, setBugs] = useState<any[]>([]);
@@ -26,6 +28,8 @@ const BugsPage = () => {
     const [link, setLink] = useState('');
     const [severity, setSeverity] = useState('medium');
 
+    const [showPricing, setShowPricing] = useState(false);
+
     const getBugs = async () => {
         const { data } = await supabase.from('bugs')
             .select("*")
@@ -38,7 +42,13 @@ const BugsPage = () => {
         if (appId) getBugs();
     }, [appId]);
 
+    const isPro = useIsSubscribed(appId) === 'true';
+
     const addBug = async () => {
+        if (!isPro && bugs.length >= 2) {
+            setShowPricing(true);
+            return;
+        }
         if (!name) return;
         await supabase.from('bugs').insert({
             app_id: appId,
@@ -272,6 +282,7 @@ const BugsPage = () => {
                     </div>
                 )}
             </div>
+            <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId} />
         </div>
     )
 }

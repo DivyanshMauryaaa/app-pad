@@ -47,7 +47,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Given the following bug or issue, generate a detailed bug report as a JSON object with \"title\", \"description\", \"severity\", and optionally \"line_number\". Be concise but clear. Bug: ${description}${repoContext} Give it to me in a structured form, don't mess it up`
+            text: `Given the following bug or issue, generate a detailed bug report as a JSON object with \"title\", \"description\", \"severity\", and optionally \"line_number\". Be concise but clear. Bug: ${description}${repoContext} Give it to me in a structured form, don't mess it up. ONLY USE THE KNOWLEDGE AVAILBLE TO YOU! DO NOT PREDICT ANYTHING!`
           }]
         }]
       })

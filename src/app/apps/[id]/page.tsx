@@ -17,6 +17,8 @@ import { Card, CardHeader } from '@/components/ui/card';
 import { ArrowRight, Bot, Bug, CheckCircle2, FileIcon, GithubIcon, KeyRoundIcon, Sparkles } from 'lucide-react';
 import RepoBrowser from '@/app/repo/page';
 import { Button } from '@/components/ui/button';
+import { Input } from '@/components/ui/input';
+import { Textarea } from '@/components/ui/textarea';
 
 export default function Page() {
     const params = useParams();
@@ -27,6 +29,9 @@ export default function Page() {
     const [tab, setTab] = useState('home');
     const [installationId, setInstallationId] = useState('');
     const [githubRepo, setGithubRepo] = useState('');
+
+    const [appName, setAppName] = useState(app?.name);
+    const [appDescription, setAppDescription] = useState(app?.description);
 
     const getAppData = async () => {
         const { data, error } = await supabase.from('apps')
@@ -169,28 +174,65 @@ export default function Page() {
                         <DocumentsPage />
                     </TabsContent>
                     <TabsContent value="settings">
-
-                        <div className="flex flex-col gap-6 max-w-xl mx-auto mt-8">
-                            <h2 className="text-3xl font-bold mb-2">Settings</h2>
-                            <div className="flex items-center justify-between p-4 rounded-lg border border-border bg-muted">
-                                <span className="font-medium text-lg">Subscription Status</span>
+                        <div className="flex flex-col gap-8 max-w-2xl mx-auto mt-8">
+                            <h2 className="text-4xl font-bold mb-4">Settings</h2>
+                            {/* Subscription Status */}
+                            <Card className="p-6 flex flex-col gap-2">
+                                <span className="font-medium text-lg mb-2">Subscription Status</span>
                                 {app?.is_subscribed === "true" ? (
-                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-semibold">
+                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-semibold w-fit">
                                         Active
                                     </span>
                                 ) : (
-                                    <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm font-semibold">
+                                    <span className="px-3 py-1 rounded-full bg-red-100 dark:bg-red-900 text-red-700 dark:text-red-300 text-sm font-semibold w-fit">
                                         Inactive
                                     </span>
                                 )}
-                            </div>
-
-                            <div className='flex items-center justify-between p-4 rounded-lg border border-border bg-muted'>
-
-                            </div>
+                            </Card>
+                            {/* App Info */}
+                            <Card className="p-6 flex flex-col gap-4">
+                                <span className="font-medium text-lg mb-2">App Information</span>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold">App Name</label>
+                                    <Input
+                                        value={appName}
+                                        onBlur={async (e) => {
+                                            if (e.target.value === app?.name) return;
+                                            const { data, error } = await supabase.from('apps')
+                                                .update({ name: e.target.value })
+                                                .eq('id', id)
+                                                .single();
+                                            setAppName(e.target.value);
+                                        }}
+                                        onChange={(e) => setAppName(e.target.value)}
+                                        className="max-w-md"
+                                    />
+                                </div>
+                                <div className="flex flex-col gap-2">
+                                    <label className="text-sm font-semibold">App Description</label>
+                                    <Textarea
+                                        value={appDescription}
+                                        onBlur={async (e) => {
+                                            if (e.target.value === app?.description) return;
+                                            const { data, error } = await supabase.from('apps')
+                                                .update({ description: e.target.value })
+                                                .eq('id', id)
+                                                .single();
+                                            setAppDescription(e.target.value);
+                                        }}
+                                        onChange={(e) => setAppDescription(e.target.value)}
+                                        className="max-w-md min-h-[80px]"
+                                    />
+                                </div>
+                            </Card>
+                            {/* Github Info */}
+                            <Card className="p-6 flex flex-col gap-2">
+                                <span className="font-medium text-lg mb-2">GitHub Integration</span>
+                                <div className="text-sm">Installation ID: <span className="font-mono">{installationId || <span className="text-muted-foreground">Not connected</span>}</span></div>
+                                <div className="text-sm">Repo: <span className="font-mono">{githubRepo || <span className="text-muted-foreground">Not set</span>}</span></div>
+                                <div className="text-sm">App ID: <span className="font-mono">{id}</span></div>
+                            </Card>
                         </div>
-
-
                     </TabsContent>
                     <TabsContent value="vault">
                         <Vault />

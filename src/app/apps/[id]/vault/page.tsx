@@ -12,6 +12,8 @@ import { Label } from "@/components/ui/label";
 import { Textarea } from "@/components/ui/textarea";
 import { Copy, Eye, Smartphone } from "lucide-react";
 import { toast } from "sonner";
+import PricingDialog from '@/app/components/PricingDialog';
+import { useIsSubscribed } from "@/hooks/use-is-subscribed";
 
 const Vault = () => {
 
@@ -21,6 +23,7 @@ const Vault = () => {
     const [editDialogOpen, setEditDialogOpen] = useState(false);
     const [showDialogOpen, setShowDialogOpen] = useState(false);
     const [selectedEnv, setSelectedEnv] = useState<any>(null);
+    const [showPricing, setShowPricing] = useState(false);
 
     // const { user } = useUser();
     const params = useParams();
@@ -29,6 +32,7 @@ const Vault = () => {
     const [newEnvKey, setNewEnvKey] = useState("");
     const [newEnvValue, setNewEnvValue] = useState("")
     const [newEnvDescription, setNewEnvDescription] = useState("");
+    const [newEnvType, setNewEnvType] = useState('development');
 
     const getEnv = async () => {
         const { data, error } = await supabase
@@ -41,6 +45,11 @@ const Vault = () => {
     }
 
     const addEnv = async () => {
+        if (!isPro && env.length >= 3) {
+            setShowPricing(true);
+            setLoading(false);
+            return;
+        }
         setLoading(true);
 
         const { error } = await supabase.from('vault')
@@ -48,7 +57,8 @@ const Vault = () => {
                 key: newEnvKey,
                 value: newEnvValue,
                 description: newEnvDescription,
-                app_id: appId
+                app_id: appId,
+                ...(isPro ? { type: newEnvType } : {})
             })
 
         if (error) alert(error);
@@ -108,6 +118,8 @@ const Vault = () => {
         setSelectedEnv(envVar);
         setShowDialogOpen(true);
     };
+
+    const isPro = useIsSubscribed(appId as string) === 'true';
 
     useEffect(() => {
         if (appId) {
@@ -181,6 +193,21 @@ const Vault = () => {
                                 rows={3}
                             />
                         </div>
+                        {isPro && (
+                            <div className="grid grid-cols-4 items-center gap-4">
+                                <Label htmlFor="type" className="text-right">Type</Label>
+                                <select
+                                    id="type"
+                                    value={newEnvType}
+                                    onChange={e => setNewEnvType(e.target.value)}
+                                    className="col-span-3 border rounded px-2 py-1"
+                                >
+                                    <option value="development">Development</option>
+                                    <option value="production">Production</option>
+                                    <option value="staging">Staging</option>
+                                </select>
+                            </div>
+                        )}
                     </div>
                     <div className="flex justify-end gap-2">
                         <Button
@@ -198,6 +225,8 @@ const Vault = () => {
                     </div>
                 </DialogContent>
             </Dialog>
+
+            <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId as string || ''} />
 
             <div className="mt-6 space-y-4">
                 {env.map((envVar: any) => (

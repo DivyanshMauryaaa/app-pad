@@ -21,6 +21,8 @@ import { toast } from 'sonner';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { Card, CardDescription, CardHeader } from '@/components/ui/card';
 import MdRenderer from '@/components/mdrenderer';
+import PricingDialog from '@/app/components/PricingDialog';
+import { useIsSubscribed } from "@/hooks/use-is-subscribed"
 
 const DocumentsPage = () => {
     const params = useParams();
@@ -93,6 +95,17 @@ const DocumentsPage = () => {
     };
 
     const [showDialogOpen, setShowDialogOpen] = useState(false);
+    const [showPricing, setShowPricing] = useState(false);
+
+    const isPro = useIsSubscribed(appId as string) === 'true';
+
+    const handleAddDoc = async () => {
+        if (!isPro && documents.length >= 10) {
+            setShowPricing(true);
+            return;
+        }
+        await addDoc();
+    };
 
     if (loading && documents.length === 0) {
         return (
@@ -131,7 +144,7 @@ const DocumentsPage = () => {
                             onChange={e => setDocContent(e.target.value)}
                             className="mb-2"
                         />
-                        <Button onClick={addDoc} className="w-full mt-2" disabled={loading}>
+                        <Button onClick={handleAddDoc} className="w-full mt-2" disabled={loading}>
                             {loading ? "Adding..." : "Add Document"}
                         </Button>
                     </DialogContent>
@@ -254,6 +267,7 @@ const DocumentsPage = () => {
                     </Tabs>
                 </DialogContent>
             </Dialog>
+            <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId as string || ''} />
         </div>
     );
 }

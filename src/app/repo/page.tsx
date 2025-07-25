@@ -96,7 +96,7 @@ export default function RepoBrowser({ installationId = '', githubRepo = '', app 
         )}
         <ul className="space-y-2">
           {contents.map(item => (
-            <li key={item.sha || item.path} className="flex items-center gap-3 p-2 rounded hover:bg-muted transition">
+            <li key={item.sha || item.path} className="flex items-center gap-3 p-2 rounded hover:bg-muted">
               {item.type === 'dir' ? (
                 <div className='flex items-center gap-2 cursor-pointer' onClick={() => handleFolderClick(item.path)}>
                   <Folder className="w-5 h-5 text-primary" />

@@ -49,7 +49,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Generate clear and concise markdown documentation for the following feature or code. Return only markdown. Feature/Code: ${prompt}${repoContext}`
+            text: `Generate clear and concise markdown documentation for the following feature or code. Return only markdown. Feature/Code: ${prompt}${repoContext} ONLY USE THE KNOWLEDGE AVAILBLE TO YOU! DO NOT PREDICT ANYTHING!`
           }]
         }]
       })

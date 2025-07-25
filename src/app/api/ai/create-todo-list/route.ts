@@ -56,7 +56,7 @@ export async function POST(req: NextRequest) {
       body: JSON.stringify({
         contents: [{
           parts: [{
-            text: `Break down the following software feature into specific development tasks as a JSON array of objects with \"name\" and \"description\" properties. Each task should be actionable for a developer. Be concise but clear. Feature: ${Newprompt}${repoContext}`
+            text: `Break down the following software feature into specific development tasks as a JSON array of objects with \"name\" and \"description\" properties. Each task should be actionable for a developer. Be concise but clear. Feature: ${Newprompt}${repoContext} ONLY USE THE KNOWLEDGE AVAILBLE TO YOU! DO NOT PREDICT ANYTHING!`
           }]
         }]
       })

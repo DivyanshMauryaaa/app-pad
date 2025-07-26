@@ -74,8 +74,8 @@ FixFlow eliminates the chaos by centralizing:
 
 ```bash
 # Clone the repository
-git clone https://github.com/yourusername/fixflow.git
-cd fixflow
+git clone https://github.com/divyanshmauryaaa/pulsepatch.git
+cd pulsepatch
 
 # Install dependencies
 npm install
@@ -84,55 +84,25 @@ npm install
 cp .env.example .env.local
 # Edit .env.local with your configuration
 
-# Set up database
-npx prisma generate
-npx prisma db push
-
 # Start development server
 npm run dev
 ```
 
 --- 
 
-<!--
-## 🛣️ Roadmap
-
-### Phase 1 (MVP) ✅
-- [ ] GitHub integration
-- [ ] Basic AI documentation
-- [x] Project management dashboard
-- [x] User authentication
-
-### Phase 2 (Current) 🔄
-- [ ] AI milestone planning
-- [ ] Advanced report generation
-- [ ] Customer support system
-- [ ] Legal document generation
-
-### Phase 3 (Future) 📋
-- [ ] Mobile app
-- [ ] Advanced integrations (Vercel, Supabase)
-- [ ] Team collaboration features
-- [ ] Analytics and insights
--->
----
-
 ## 🎯 Target Audience
 
 - **Solo developers** building side projects
 - **Indie hackers** launching SaaS products
 - **Small development teams** (2-10 people)
+  
 ---
 
-<!--
 ## 🔗 Links
 
-- **Website**: [fixflow.dev](https://fixflow.dev) (Coming Soon)
-- **Documentation**: [docs.fixflow.dev](https://docs.fixflow.dev) (Coming Soon)
+- **Website**: [pulsepatch.dev](https://pulsepatch.dev) (Coming Soon)
 - **Twitter**: [@FixFlowApp](https://twitter.com/FixFlowApp) (Coming Soon)
 - **Discord**: [Join our community](https://discord.gg/fixflow) (Coming Soon)
--->
----
 
 ## 🌟 Why Pulsepatch?
 

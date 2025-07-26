@@ -765,7 +765,7 @@ const AiPage = () => {
                     />
                     {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 1000 max)</span>}
                   </div>
-                  <div className="flex items-center gap-2">
+                  {/* <div className="flex items-center gap-2">
                     <Checkbox checked={includePRs} onCheckedChange={checked => setIncludePRs(!!checked)} id="include-prs" />
                     <Label htmlFor="include-prs">Include Pull Requests?</Label>
                     {includePRs && (
@@ -814,7 +814,7 @@ const AiPage = () => {
                         {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 5 max)</span>}
                       </>
                     )}
-                  </div>
+                  </div> */}
                 </div>
               )}
             </div>

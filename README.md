@@ -1,4 +1,4 @@
-# Pulsepatch 🚀 (in development, not all features are available to use)
+# Pulsepatch
 
 **The central control panel for your software business - where code meets clarity.**
 

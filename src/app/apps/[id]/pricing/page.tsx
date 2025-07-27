@@ -9,14 +9,15 @@ import { useUser } from '@clerk/nextjs';
 import { CheckCircle } from 'lucide-react';
 import supabase from '@/supabase/client';
 
-const PricingPage = ({ appId }: { appId: any }) => {
+const PricingPage = () => {
   const params = useParams();
+  const appId = params.id;
   const [appName, setAppName] = useState("");
 
   const getAppData = async () => {
     const { data, error } = await supabase.from('apps')
       .select('name')
-      .eq('id', params.id)
+      .eq('id', appId)
       .single();
     if (error) {
       console.error(error);
@@ -27,11 +28,9 @@ const PricingPage = ({ appId }: { appId: any }) => {
 
   useEffect(() => {
     getAppData();
-  }, [params.id]);
+  }, [appId]);
 
-  const APP_ID_PARAM = params.id;
-  const APP_ID = APP_ID_PARAM?.toString() ?? appId;
-  const isSubscribed = useIsSubscribed(APP_ID);
+  const isSubscribed = useIsSubscribed(appId as string);
   const [loading, setLoading] = useState(false);
   const { user } = useUser();
 
@@ -40,7 +39,7 @@ const PricingPage = ({ appId }: { appId: any }) => {
     const res = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ appId: APP_ID, userId: user?.id }), // userId can be anything, not used for subscription logic
+      body: JSON.stringify({ appId: appId as string, userId: user?.id }), // userId can be anything, not used for subscription logic
     });
     const data = await res.json();
     if (data.url) {

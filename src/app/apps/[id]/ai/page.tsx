@@ -1182,7 +1182,7 @@ const AiPage = () => {
           </Card>
         </TabsContent>
       </Tabs>
-      <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId} />
+      <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
     </div>
   );
 };

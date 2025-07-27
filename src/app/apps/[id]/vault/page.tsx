@@ -226,7 +226,7 @@ const Vault = () => {
                 </DialogContent>
             </Dialog>
 
-            <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId as string || ''} />
+            <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
 
             <div className="mt-6 space-y-4">
                 {env.map((envVar: any) => (

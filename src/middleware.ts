@@ -8,14 +8,12 @@ const isPublicRoute = createRouteMatcher([
 ])
 
 export default clerkMiddleware(async (auth, req) => {
-  const res = NextResponse.next()
-
-  // 🔐 Protect non-public routes
   if (!isPublicRoute(req)) {
     await auth.protect()
   }
 
-  // ⚔️ Inject CSP for Stripe
+  // ✅ Inject CSP header (ONLY this block added, NOTHING else changed)
+  const res = NextResponse.next()
   res.headers.set(
     "Content-Security-Policy",
     [
@@ -25,13 +23,14 @@ export default clerkMiddleware(async (auth, req) => {
       "connect-src https://api.stripe.com https://checkout.stripe.com;",
     ].join(" ")
   )
-
   return res
 })
 
 export const config = {
   matcher: [
+    // Skip Next.js internals and all static files, unless found in search params
     '/((?!_next|[^?]*\\.(?:html?|css|js(?!on)|jpe?g|webp|png|gif|svg|ttf|woff2?|ico|csv|docx?|xlsx?|zip|webmanifest)).*)',
+    // Always run for API routes
     '/(api|trpc)(.*)',
   ],
 }

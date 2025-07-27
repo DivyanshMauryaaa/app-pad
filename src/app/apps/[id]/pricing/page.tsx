@@ -39,7 +39,7 @@ const PricingPage = () => {
     const res = await fetch('/api/create-checkout-session', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
-      body: JSON.stringify({ appId: appId as string, userId: user?.id }), // userId can be anything, not used for subscription logic
+      body: JSON.stringify({ appId: appId, userId: user?.id }), // userId can be anything, not used for subscription logic
     });
     const data = await res.json();
     if (data.url) {
@@ -85,17 +85,17 @@ const PricingPage = () => {
               <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Env Type supported - Development, Production, Staging</li>
               <li className="flex items-center gap-2"><CheckCircle className="w-4 h-4 text-green-500" /> Customizablity over GitHub Context Usage in AI</li>
             </ul>
-            <Button onClick={handleSubscribe} disabled={isSubscribed === "true" ? true : false} className="w-full bg-blue-600 cursor-pointer hover:bg-blue-700 text-white">Upgrade to Pro</Button>
+            <Button onClick={handleSubscribe} disabled={isSubscribed === "true" || loading ? true : false} className="w-full bg-blue-600 cursor-pointer hover:bg-blue-700 text-white">Upgrade to Pro</Button>
           </CardContent>
         </Card>
       </div>
 
       <div className="mt-8 text-center">
-          {isSubscribed === "true" ? <p className='text-green-600'>Subscription Active</p> : <p></p>}
+        {isSubscribed === "true" ? <p className='text-green-600'>Subscription Active</p> : <p></p>}
       </div>
 
     </div>
   );
-} 
+}
 
 export default PricingPage;

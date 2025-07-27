@@ -352,7 +352,7 @@ const TodoContent = () => {
                     )}
                 </div>
             </div>
-            <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId} />
+            <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
         </div>
     )
 }

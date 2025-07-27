@@ -1,6 +1,7 @@
 'use client';
 
 import { useState, useEffect } from 'react';
+import { useParams } from 'next/navigation';
 import { useRepoData } from '@/hooks/use-repo-data';
 import { Card, CardHeader, CardContent, CardTitle } from '@/components/ui/card';
 import { Input } from '@/components/ui/input';
@@ -11,30 +12,54 @@ import { Folder, FileText } from 'lucide-react';
 import { toast } from 'sonner';
 import supabase from '@/supabase/client';
 
-interface RepoBrowserProps {
-  installationId?: string;
-  githubRepo?: string;
-  app?: any;
-}
+export default function RepoBrowser() {
+  const params = useParams();
+  const appId = params.id;
 
-export default function RepoBrowser({ installationId = '', githubRepo = '', app }: RepoBrowserProps) {
-  const [repoInput, setRepoInput] = useState(githubRepo || '');
+  const [app, setApp] = useState<any>(null);
+  const [loading, setLoading] = useState(true);
+  const [inputError, setInputError] = useState('');
+  const [repoInput, setRepoInput] = useState('');
   const [owner, setOwner] = useState('');
   const [repo, setRepo] = useState('');
+  const [installationId, setInstallationId] = useState('');
   const [path, setPath] = useState('');
-  const [inputError, setInputError] = useState('');
 
   useEffect(() => {
-    if (githubRepo && githubRepo.includes('/')) {
-      setRepoInput(githubRepo);
-      const [o, r] = githubRepo.split('/');
+    if (!appId) {
+      setInputError('No appId provided in URL');
+      setLoading(false);
+      return;
+    }
+    setLoading(true);
+    supabase.from('apps').select('*').eq('id', appId).single().then(({ data, error }) => {
+      if (error || !data) {
+        setInputError('App not found');
+        setLoading(false);
+        return;
+      }
+      setApp(data);
+      setRepoInput(data.github_repo || '');
+      setInstallationId(data.github_installation_id || '');
+      if (data.github_repo && data.github_repo.includes('/')) {
+        const [o, r] = data.github_repo.split('/');
+        setOwner(o);
+        setRepo(r);
+      }
+      setLoading(false);
+    });
+  }, [appId]);
+
+  useEffect(() => {
+    if (repoInput && repoInput.includes('/')) {
+      const [o, r] = repoInput.split('/');
       setOwner(o);
       setRepo(r);
       setPath('');
     }
-  }, [githubRepo]);
+  }, [repoInput]);
 
-  const { contents, loading, error } = useRepoData({ owner, repo, installationId, path });
+  const { contents, loading: repoLoading, error } = useRepoData({ owner, repo, installationId, path });
 
   const handleBrowse = async () => {
     setInputError('');
@@ -47,13 +72,15 @@ export default function RepoBrowser({ installationId = '', githubRepo = '', app 
       setInputError('No installation ID found for this app.');
       return;
     }
-
+    if (!app) {
+      setInputError('No app loaded.');
+      return;
+    }
     const { error } = await supabase.from('apps').update({ github_repo: `${parts[0]}/${parts[1]}` }).eq('id', app.id).single();
     if (error) {
       setInputError('Error updating app');
       return;
     }
-
     setOwner(parts[0]);
     setRepo(parts[1]);
     setPath('');
@@ -82,7 +109,7 @@ export default function RepoBrowser({ installationId = '', githubRepo = '', app 
         </div>
         {inputError && <Badge variant="destructive" className="mb-2">{inputError}</Badge>}
         {error && <Badge variant="destructive" className="mb-2">{error}</Badge>}
-        {loading && <Badge className="mb-2">Loading...</Badge>}
+        {(loading || repoLoading) && <Badge className="mb-2">Loading...</Badge>}
         {owner && repo && (
           <div className="mb-4">
             <span className="font-semibold">Repo:</span> <Badge onClick={() => { navigator.clipboard.writeText(`${owner}/${repo}`); toast.success('Copied to clipboard') }} className='cursor-pointer'>{owner}/{repo}</Badge>
@@ -112,7 +139,7 @@ export default function RepoBrowser({ installationId = '', githubRepo = '', app 
             </li>
           ))}
         </ul>
-        {!loading && contents.length === 0 && owner && repo && (
+        {!loading && !repoLoading && contents.length === 0 && owner && repo && (
           <div className="text-muted-foreground mt-4">Nothing here...</div>
         )}
       </CardContent>

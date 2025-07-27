@@ -8,18 +8,12 @@ import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
 import { Textarea } from "@/components/ui/textarea";
 import { Tabs, TabsList, TabsTrigger, TabsContent } from "@/components/ui/tabs";
-import ReactMarkdown from "react-markdown";
-import remarkGfm from "remark-gfm";
-import remarkBreaks from "remark-breaks";
-import rehypeHighlight from "rehype-highlight";
-import rehypeSlug from "rehype-slug";
-import rehypeAutolinkHeadings from "rehype-autolink-headings";
 import "highlight.js/styles/github-dark.css"; // or another highlight.js theme
-import { ArrowLeftCircleIcon, Copy, Eye, FileIcon, SaveIcon, Trash2 } from 'lucide-react';
+import { ArrowLeftCircleIcon, FileIcon, SaveIcon, Trash2 } from 'lucide-react';
 import { toast } from 'sonner';
 // import { AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
 import { AlertDialog, AlertDialogTrigger, AlertDialogContent, AlertDialogTitle, AlertDialogDescription, AlertDialogAction, AlertDialogHeader, AlertDialogFooter } from '@/components/ui/alert-dialog';
-import { Card, CardDescription, CardHeader } from '@/components/ui/card';
+import { Card, CardHeader } from '@/components/ui/card';
 import MdRenderer from '@/components/mdrenderer';
 import PricingDialog from '@/app/components/PricingDialog';
 import { useIsSubscribed } from "@/hooks/use-is-subscribed"
@@ -267,7 +261,7 @@ const DocumentsPage = () => {
                     </Tabs>
                 </DialogContent>
             </Dialog>
-            <PricingDialog open={showPricing} onOpenChange={setShowPricing} appId={appId as string || ''} />
+            <PricingDialog open={showPricing} onOpenChange={setShowPricing} />
         </div>
     );
 }

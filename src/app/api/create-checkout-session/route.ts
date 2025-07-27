@@ -17,13 +17,13 @@ export async function POST(req: NextRequest) {
       payment_method_types: ['card'],
       line_items: [
         {
-          price: "price_1RnIFGSHsqy7jhMiNtHxStZN",
+          price: "price_1RpPXzSIoZyRwlMfvSxRUPkn",
           quantity: 1,
         },
       ],
       mode: 'subscription',
-      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000/apps/"}${appId}/pricing?success=true`,
-      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000/apps/"}${appId}/pricing?canceled=true`,
+      success_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/apps/${appId}/pricing?success=true`,
+      cancel_url: `${process.env.NEXT_PUBLIC_BASE_URL || "http://localhost:3000"}/apps/${appId}/pricing?canceled=true`,
       metadata: {
         appId,
         userId,

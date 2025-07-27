@@ -15,7 +15,7 @@ import AppBranding from './brand/page';
 import AiPage from './ai/page';
 import { Card, CardHeader } from '@/components/ui/card';
 import { ArrowRight, Bot, Bug, CheckCircle2, FileIcon, GithubIcon, KeyRoundIcon, Sparkles } from 'lucide-react';
-import RepoBrowser from '@/app/repo/page';
+import RepoBrowser from './repo/page';
 import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
@@ -168,7 +168,7 @@ export default function Page() {
                         </div>
 
                         <div className='w-[90%] m-auto'>
-                            <RepoBrowser installationId={installationId} githubRepo={githubRepo} app={app} />
+                            <RepoBrowser />
                         </div>
 
                         <br />
@@ -282,7 +282,7 @@ export default function Page() {
                             </div>
                         )}
                         {/* Repo browser only if installationId is present */}
-                        {installationId && <RepoBrowser installationId={installationId} githubRepo={githubRepo} app={app} />}
+                        {installationId && <RepoBrowser />}
                     </TabsContent>
                 </div>
             </Tabs>

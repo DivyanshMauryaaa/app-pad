@@ -9,7 +9,7 @@ import { useUser } from '@clerk/nextjs';
 import { CheckCircle } from 'lucide-react';
 import supabase from '@/supabase/client';
 
-export default function PricingPage({ appId }: { appId: string }) {
+export default function PricingPage({ appId }: { appId: any }) {
   const params = useParams();
   const [appName, setAppName] = useState("");
 

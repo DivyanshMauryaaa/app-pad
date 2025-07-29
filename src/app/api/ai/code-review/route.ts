@@ -14,7 +14,7 @@ export async function POST(req: NextRequest) {
     let fileContent = '';
     if (owner && repo && installationId) {
       const appId = process.env.GITHUB_APP_ID;
-      const privateKey = process.env.GITHUB_PRIVATE_KEY?.replace(/\\n/g, '\n');
+      const privateKey = process.env.GITHUB_PRIVATE_KEY?.replaceAll("\\n", "\n");
       const octokit = new Octokit({
         authStrategy: createAppAuth,
         auth: {

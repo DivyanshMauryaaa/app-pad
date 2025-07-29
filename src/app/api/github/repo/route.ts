@@ -3,7 +3,7 @@ import { Octokit } from 'octokit';
 import { createAppAuth } from '@octokit/auth-app';
 
 const appId = process.env.GITHUB_APP_ID;
-const privateKey = process.env.GITHUB_PRIVATE_KEY?.replace(/\\n/g, '\n');
+const privateKey = process.env.GITHUB_PRIVATE_KEY?.replaceAll("\\n", "\n");
 // Accept installation_id from query or env
 // const installationId = process.env.GITHUB_INSTALLATION_ID;
 

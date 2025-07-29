@@ -4,7 +4,7 @@ import { createAppAuth } from '@octokit/auth-app';
 import { fetchAllRepoFilesWithContent } from '@/lib/github';
 
 const appId = process.env.GITHUB_APP_ID;
-const privateKey = process.env.GITHUB_PRIVATE_KEY?.replace(/\\n/g, '\n');
+const privateKey = process.env.GITHUB_PRIVATE_KEY?.replaceAll("\\n", "\n");
 
 export async function GET(req: NextRequest) {
   const { searchParams } = new URL(req.url);

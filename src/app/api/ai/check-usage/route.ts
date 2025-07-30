@@ -9,7 +9,7 @@ export async function POST(req: NextRequest) {
     }
     // Check if user is Pro
     const { data: app } = await supabase.from('apps').select('is_subscribed').eq('id', app_id).single();
-    if (app?.is_subscribed === 'true') {
+    if (app?.is_subscribed === 'standard' || app?.is_subscribed === 'pro') {
       return NextResponse.json({ allowed: true, generations_left: null });
     }
     // Free plan: check ai_usage

@@ -27,6 +27,7 @@ export async function POST(req: NextRequest) {
       metadata: {
         appId,
         userId,
+        plan: 'standard',
       },
     });
     return NextResponse.json({ url: session.url });

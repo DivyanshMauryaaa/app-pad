@@ -37,11 +37,12 @@ export async function POST(req: NextRequest) {
       case 'invoice.payment_succeeded':
         const session = event.data.object as Stripe.Checkout.Session;
         const appId = session.metadata?.appId;
-
+        const plan = session.metadata?.plan;
+        
         if (appId) {
           const { error } = await supabase
             .from('apps')
-            .update({ is_subscribed: 'true' })
+            .update({ is_subscribed: plan })
             .eq('id', appId);
 
           if (error) {

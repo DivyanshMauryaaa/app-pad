@@ -214,7 +214,7 @@ const AiPage = () => {
     allFiles,
     allPRs,
     allCommits,
-    isPro: isSubscribed === 'true',
+    isPro: isSubscribed === 'standard' || isSubscribed === 'pro',
   };
 
   useEffect(() => {
@@ -298,7 +298,7 @@ const AiPage = () => {
 
   // Helper to check AI usage
   const checkAIUsage = async () => {
-    if (isSubscribed === 'true') return true;
+    if (isSubscribed === 'standard' || isSubscribed === 'pro') return true;
     const res = await fetch('/api/ai/check-usage', {
       method: 'POST',
       headers: { 'Content-Type': 'application/json' },
@@ -736,34 +736,34 @@ const AiPage = () => {
                     <Input
                       type="number"
                       min={1}
-                      max={allFiles ? 9999 : (isSubscribed === 'true' ? 9999 : 20)}
+                      max={allFiles ? 9999 : ((isSubscribed === 'standard' || isSubscribed === 'pro') ? 9999 : 20)}
                       value={allFiles ? '' : githubFileLimit}
                       onChange={e => setGithubFileLimit(Number(e.target.value))}
-                      disabled={isSubscribed !== 'true'}
-                      placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 20'}
+                      disabled={isSubscribed !== 'standard' && isSubscribed !== 'pro'}
+                      placeholder={(isSubscribed === 'standard' || isSubscribed === 'pro') ? 'Enter number or select All' : 'Max 20'}
                       style={{ width: 80 }}
                     />
-                    {isSubscribed === 'true' && (
+                    {(isSubscribed === 'standard' || isSubscribed === 'pro') && (
                       <div className="flex items-center gap-1">
                         <Checkbox checked={allFiles} onCheckedChange={checked => setAllFiles(!!checked)} id="all-files" />
                         <Label htmlFor="all-files">All</Label>
                       </div>
                     )}
-                    {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 20 max)</span>}
+                    {(isSubscribed !== 'standard' && isSubscribed !== 'pro') && <span className="text-xs text-muted-foreground">(Free: 20 max)</span>}
                   </div>
                   <div className="flex items-center gap-2">
                     <Label>Lines per file:</Label>
                     <Input
                       type="number"
                       min={1}
-                      max={allFiles ? 99999 : (isSubscribed === 'true' ? 99999 : 1000)}
+                      max={allFiles ? 99999 : ((isSubscribed === 'standard' || isSubscribed === 'pro') ? 99999 : 1000)}
                       value={allFiles ? '' : githubLineLimit}
                       onChange={e => setGithubLineLimit(Number(e.target.value))}
-                      disabled={isSubscribed !== 'true'}
-                      placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 1000'}
+                      disabled={isSubscribed !== 'standard' && isSubscribed !== 'pro'}
+                      placeholder={(isSubscribed === 'standard' || isSubscribed === 'pro') ? 'Enter number or select All' : 'Max 1000'}
                       style={{ width: 100 }}
                     />
-                    {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 1000 max)</span>}
+                    {(isSubscribed !== 'standard' && isSubscribed !== 'pro') && <span className="text-xs text-muted-foreground">(Free: 1000 max)</span>}
                   </div>
                   {/* <div className="flex items-center gap-2">
                     <Checkbox checked={includePRs} onCheckedChange={checked => setIncludePRs(!!checked)} id="include-prs" />
@@ -773,20 +773,20 @@ const AiPage = () => {
                         <Input
                           type="number"
                           min={1}
-                          max={allPRs ? 999 : (isSubscribed === 'true' ? 999 : 2)}
+                          max={allPRs ? 999 : (isSubscribed === 'standard' ? 999 : 2)}
                           value={allPRs ? '' : prLimit}
                           onChange={e => setPrLimit(Number(e.target.value))}
-                          disabled={isSubscribed !== 'true'}
-                          placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 2'}
+                          disabled={isSubscribed !== 'standard'}
+                          placeholder={isSubscribed === 'standard' ? 'Enter number or select All' : 'Max 2'}
                           style={{ width: 80 }}
                         />
-                        {isSubscribed === 'true' && (
+                        {isSubscribed === 'standard' && (
                           <div className="flex items-center gap-1">
                             <Checkbox checked={allPRs} onCheckedChange={checked => setAllPRs(!!checked)} id="all-prs" />
                             <Label htmlFor="all-prs">All</Label>
                           </div>
                         )}
-                        {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 2 max)</span>}
+                        {isSubscribed !== 'standard' && <span className="text-xs text-muted-foreground">(Free: 2 max)</span>}
                       </>
                     )}
                   </div>
@@ -798,20 +798,20 @@ const AiPage = () => {
                         <Input
                           type="number"
                           min={1}
-                          max={allCommits ? 999 : (isSubscribed === 'true' ? 999 : 5)}
+                          max={allCommits ? 999 : (isSubscribed === 'standard' ? 999 : 5)}
                           value={allCommits ? '' : commitLimit}
                           onChange={e => setCommitLimit(Number(e.target.value))}
-                          disabled={isSubscribed !== 'true'}
-                          placeholder={isSubscribed === 'true' ? 'Enter number or select All' : 'Max 5'}
+                          disabled={isSubscribed !== 'standard'}
+                          placeholder={isSubscribed === 'standard' ? 'Enter number or select All' : 'Max 5'}
                           style={{ width: 80 }}
                         />
-                        {isSubscribed === 'true' && (
+                        {isSubscribed === 'standard' && (
                           <div className="flex items-center gap-1">
                             <Checkbox checked={allCommits} onCheckedChange={checked => setAllCommits(!!checked)} id="all-commits" />
                             <Label htmlFor="all-commits">All</Label>
                           </div>
                         )}
-                        {isSubscribed !== 'true' && <span className="text-xs text-muted-foreground">(Free: 5 max)</span>}
+                        {isSubscribed !== 'standard' && <span className="text-xs text-muted-foreground">(Free: 5 max)</span>}
                       </>
                     )}
                   </div> */}

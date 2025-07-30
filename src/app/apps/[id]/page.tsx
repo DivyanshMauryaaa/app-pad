@@ -188,9 +188,13 @@ export default function Page() {
                             {/* Subscription Status */}
                             <Card className="p-6 flex flex-col gap-2">
                                 <span className="font-medium text-lg mb-2">Subscription Status</span>
-                                {app?.is_subscribed === "true" ? (
+                                {app?.is_subscribed === "standard" ? (
                                     <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-semibold w-fit">
-                                        Active
+                                        Standard Plan
+                                    </span>
+                                ) : app?.is_subscribed === "pro" ? (
+                                    <span className="px-3 py-1 rounded-full bg-green-100 dark:bg-green-900 text-green-700 dark:text-green-300 text-sm font-semibold w-fit">
+                                        Pro Plan
                                     </span>
                                 ) : (
                                     <div className=''>
@@ -199,7 +203,7 @@ export default function Page() {
                                         </span>
                                         <br /><br />
                                         <Link href={`/apps/${id}/pricing`} className=''>
-                                            <Button variant={'default'} size="icon" aria-label="Delete app" className="w-full cursor-pointer">
+                                            <Button variant={'default'} size="icon" aria-label="Delete app" className="cursor-pointer">
                                                 Upgrade <ArrowRight size={24} />
                                             </Button>
                                         </Link>
@@ -229,10 +233,10 @@ export default function Page() {
                                 <Button
                                     className="w-fit mt-2"
                                     onClick={async () => {
-                                        const { data, error } = await supabase.from('apps')
+                                        const { error } = await supabase.from('apps')
                                             .update({ name: appName, description: appDescription })
                                             .eq('id', id)
-                                            .single();
+                                            
                                         if (error) {
                                             alert(error.message + error.cause);
                                         } else {

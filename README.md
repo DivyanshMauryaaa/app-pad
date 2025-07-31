@@ -42,21 +42,10 @@ Head to the [Pulsepatch App](https://pulsepatch.dev) (Not live yet, pls don't cl
 ## 🌐 Tech Stack
 
 - `Next.js`, `React`, `Tailwind CSS`  
-- `Node.js` + `Express` (or your backend stack)  
-- `OpenAI API` for LLM-based generation  
-- `MongoDB` or `Supabase` for storage  
-- `Stripe` for subscriptions (if monetized)
+- `Google API` for LLM-based generation  
+- `Supabase` for storage, db & server  
+- `Stripe` for subscriptions
 
----
-
-## 🤝 Contributing
-
-If you're passionate about dev tools, AI, or productivity — contributions are welcome!
-
-1. Fork the repo  
-2. Create a new branch  
-3. Make your changes  
-4. Submit a pull request
 
 ---
 

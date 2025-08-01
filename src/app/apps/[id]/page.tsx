@@ -20,6 +20,7 @@ import { Button } from '@/components/ui/button';
 import { Input } from '@/components/ui/input';
 import { Textarea } from '@/components/ui/textarea';
 import Link from 'next/link';
+import AdvancedPage from './advanced/page';
 
 export default function Page() {
     const params = useParams();
@@ -84,15 +85,19 @@ export default function Page() {
         <div className='p-6 min-h-screen'>
             <p className='text-5xl mb-8'>{app?.name}</p>
 
-            <Tabs defaultValue="codebase">
+            <Tabs defaultValue="codebase" className='w-full'>
                 <TabsList className="flex bg-background rounded-lg shadow py-3 px-6 gap-6 m-auto max-w-4xl border border-border">
                     <TabsTrigger value="codebase" className='cursor-pointer hover:underline-offset-4 hover:bg-accent data-[state=active]:underline-offset-8'>Codebase</TabsTrigger>
-                    <TabsTrigger value="database" className='cursor-pointer hover:underline-offset-4 hover:bg-accent data-[state=active]:underline-offset-8'>Advanced</TabsTrigger>
-                    <TabsTrigger value="brand" className='cursor-pointer hover:underline-offset-4 hover:bg-accent data-[state=active]:underline-offset-8'>Market</TabsTrigger>
+                    <TabsTrigger value="advanced" className='cursor-pointer hover:underline-offset-4 hover:bg-accent data-[state=active]:underline-offset-8'>Advanced</TabsTrigger>
+                    <TabsTrigger value="marketing" className='cursor-pointer hover:underline-offset-4 hover:bg-accent data-[state=active]:underline-offset-8'>Market</TabsTrigger>
                 </TabsList>
-                <TabsContent value="codebase">
+
+                <TabsContent value="advanced" className='w-full'>
+                    <AdvancedPage />
+                </TabsContent>
 
 
+                <TabsContent value="codebase" className='w-full'>
 
 
                     <Tabs value={tab} onValueChange={setTab} className="w-full mx-auto mt-8">

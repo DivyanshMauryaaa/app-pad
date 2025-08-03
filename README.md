@@ -1,15 +1,15 @@
-# ⚡ Pulsepatch
+# ⚡ AppPad
 
 > Save time. Build more.
 
-Pulsepatch is your AI-powered assistant for managing codebase tasks, documentation, and bug detection — all from one smart interface. Designed for developers, startups, and teams who'd rather build than babysit boring workflows.
+AppPad is your AI-powered assistant for managing codebase tasks, documentation, and bug detection — all from one smart interface. Designed for developers, startups, and teams who'd rather build than babysit boring workflows.
 ---
 
-## 🧠 Why Pulsepatch?
+## 🧠 Why AppPad?
 
 > “Because you've got better things to do than write README files and plan sprints manually.”
 
-Pulsepatch is not just another AI gimmick. It’s designed to help solo devs and lean teams ship faster by removing the repetitive parts of development.
+AppPad is not just another AI gimmick. It’s designed to help solo devs and lean teams ship faster by removing the repetitive parts of development.
 
 - Reduces boilerplate and busywork  
 - Keeps your workflow clean and async-friendly  
@@ -25,7 +25,7 @@ Pulsepatch is not just another AI gimmick. It’s designed to help solo devs and
 > Currently web-based
 
 No installation required.
-Head to the [Pulsepatch App](https://pulsepatch.dev) (Not live yet, pls don't click)
+Head to the [AppPad App](https://pulsepatch.dev) (Not live yet, pls don't click)
 
 
 ---

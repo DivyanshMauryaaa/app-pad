@@ -25,8 +25,8 @@ const geistMono = Geist_Mono({
 })
 
 export const metadata: Metadata = {
-  title: 'Pulsepatch',
-  description: 'Pulsepatch is a platform for creating and managing your apps\' codebase.',
+  title: 'AppPad',
+  description: 'AppPad is a platform for creating and managing your apps\' codebase.',
 }
 
 export default function RootLayout({
@@ -44,8 +44,8 @@ export default function RootLayout({
           <header className="flex justify-between items-center p-4 gap-4 h-16 border-b border-gray-200 dark:border-gray-800">
             <Link href="/">
               <div className="flex items-center gap-4">
-                <Image src="/logo.png" alt="Pulsepatch" width={32} height={32} className='rounded-full' />
-                <h1 className='text-2xl font-bold text-indigo-700'>Pulsepatch</h1>
+                <Image src="/logo.png" alt="AppPad" width={32} height={32} className='rounded-full' />
+                <h1 className='text-2xl font-bold text-blue-700 dark:text-blue-400'>AppPad</h1>
               </div>
             </Link>
             <div className='flex items-center gap-4'>

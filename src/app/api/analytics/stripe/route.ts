@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
     if (!stripeSecretKey) {
       return NextResponse.json({ error: 'Missing Stripe secret key' }, { status: 400 });
     }
-    const stripe = new Stripe(stripeSecretKey, { apiVersion: '2023-10-16' });
+    const stripe = new Stripe(stripeSecretKey, { apiVersion: '2025-06-30.basil' });
 
     // Fetch total revenue
     const charges = await stripe.charges.list({ limit: 100 });
@@ -25,12 +25,17 @@ export async function POST(req: NextRequest) {
     const subscriptions = await stripe.subscriptions.list({ limit: 100, status: 'active' });
     const activeSubscriptions = subscriptions.data.length;
 
+    const products = await stripe.products.list({ limit: 100 });
+
     return NextResponse.json({
       totalRevenue,
       totalRefunds,
       totalCharges,
       newCustomers,
       activeSubscriptions,
+      products: products.data,
+      customers: customers.data,
+      transactions: charges.data,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

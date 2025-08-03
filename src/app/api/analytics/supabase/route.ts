@@ -28,8 +28,22 @@ export async function POST(req: NextRequest) {
     // Storage usage: Not available via public API, so return null
     const storageUsage = null;
 
+    // Get all table names from information_schema
+    const { data: tables, error: tablesError } = await supabase
+      .from('information_schema.tables')
+      .select('table_name')
+      .eq('table_schema', 'public');
+
+    let tableStats = [];
+    if (!tablesError && tables) {
+      for (const table of tables) {
+        const { count } = await supabase.from(table.table_name).select('*', { count: 'exact', head: true });
+        tableStats.push({ table: table.table_name, rowCount: count });
+      }
+    }
+
     return NextResponse.json({
-      appCount,
+      tableStats,
       dbHealthy,
       dbRequests,
       storageUsage,

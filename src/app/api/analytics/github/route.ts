@@ -1,13 +1,23 @@
 import { NextRequest, NextResponse } from 'next/server';
 import { Octokit } from 'octokit';
+import { createAppAuth } from '@octokit/auth-app';
 
 export async function POST(req: NextRequest) {
   try {
-    const { githubToken, owner, repo } = await req.json();
-    if (!githubToken || !owner || !repo) {
-      return NextResponse.json({ error: 'Missing GitHub token, owner, or repo' }, { status: 400 });
+    const { owner, repo, installationId } = await req.json();
+    if (!owner || !repo || !installationId) {
+      return NextResponse.json({ error: 'Missing owner, repo, or installationId' }, { status: 400 });
     }
-    const octokit = new Octokit({ auth: githubToken });
+    const appId = process.env.GITHUB_APP_ID;
+    const privateKey = process.env.GITHUB_PRIVATE_KEY?.replaceAll("\\n", "\n");
+    const octokit = new Octokit({
+      authStrategy: createAppAuth,
+      auth: {
+        appId: appId!,
+        privateKey: privateKey!,
+        installationId: installationId!,
+      },
+    });
 
     // Commits in last 30 days
     const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();

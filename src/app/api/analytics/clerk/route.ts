@@ -7,7 +7,7 @@ export async function POST(req: NextRequest) {
       return NextResponse.json({ error: 'Missing Clerk secret key' }, { status: 400 });
     }
     // Fetch all users (paginated, but for demo just first 100)
-    const usersRes = await fetch('https://api.clerk.com/v1/users?limit=100', {
+    const usersRes = await fetch('https://api.clerk.com/v1/users?', {
       headers: {
         'Authorization': `Bearer ${clerkSecretKey}`,
         'Content-Type': 'application/json',
@@ -26,10 +26,19 @@ export async function POST(req: NextRequest) {
     const weekAgo = new Date();
     weekAgo.setDate(today.getDate() - 7);
     const activeUsers = (users.data || users).filter((u: any) => new Date(u.last_sign_in_at) >= weekAgo).length;
+    
+    const usersList = (users.data || users).map((u: any) => ({
+      id: u.id,
+      email: u.email_addresses?.[0]?.email_address || u.email,
+      created_at: u.created_at,
+      last_sign_in_at: u.last_sign_in_at,
+    }));
+    
     return NextResponse.json({
       totalUsers,
       createdToday,
       activeUsers,
+      users: usersList,
     });
   } catch (error: any) {
     return NextResponse.json({ error: error.message }, { status: 500 });

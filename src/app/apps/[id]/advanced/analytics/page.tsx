@@ -9,8 +9,11 @@ import { Select, SelectValue, SelectTrigger, SelectItem, SelectContent } from "@
 import { toast } from "sonner";
 import { Input } from "@/components/ui/input";
 import { Button } from "@/components/ui/button";
-import { ChevronDown, ChevronUp } from 'lucide-react';
+import { BookIcon, ChevronDown, ChevronUp, CreditCard, GithubIcon, LayoutDashboard } from 'lucide-react';
 import CryptoJS from 'crypto-js';
+import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs';
+import { Dialog, DialogTrigger, DialogContent, DialogHeader, DialogTitle } from '@/components/ui/dialog';
+import Link from "next/link";
 
 // Encryption helpers
 const getEncryptionKey = () => {
@@ -62,8 +65,6 @@ const AnalyticsPage = () => {
                 if (data.clerk_secret_key) data.clerk_secret_key = decryptCreds(data.clerk_secret_key);
                 if (data.supabase_url) data.supabase_url = decryptCreds(data.supabase_url);
                 if (data.supabase_service_key) data.supabase_service_key = decryptCreds(data.supabase_service_key);
-                if (data.github_token) data.github_token = decryptCreds(data.github_token);
-                if (data.github_repo) data.github_repo = decryptCreds(data.github_repo);
                 if (data.stripe_secret_key) data.stripe_secret_key = decryptCreds(data.stripe_secret_key);
                 setApp(data);
             }
@@ -106,7 +107,13 @@ const AnalyticsPage = () => {
 
     // Auto-fetch analytics if all creds present and not dirty
     useEffect(() => {
-        if (!credsDirty && allCredsPresent()) {
+        if (platform === 'github') {
+            // Always auto-fetch for GitHub if app has installation_id and repo
+            if (app && app.github_installation_id && app.github_repo) {
+                setCredsExpanded(false);
+                fetchAnalytics();
+            }
+        } else if (!credsDirty && allCredsPresent()) {
             setCredsExpanded(false);
             fetchAnalytics();
         } else if (!allCredsPresent()) {
@@ -128,7 +135,11 @@ const AnalyticsPage = () => {
                 body = { supabaseUrl, supabaseServiceKey };
             } else if (platform === 'github') {
                 apiUrl = '/api/analytics/github';
-                body = { githubToken, owner: githubOwner, repo: githubRepo };
+                // Use app.github_installation_id and app.github_repo if available
+                let owner = app.github_repo.split('/')[0] || '';
+                let repo = app.github_repo.split('/')[1] || '';
+                let installationId = app.github_installation_id || '';
+                body = { owner, repo, installationId };
             } else if (platform === 'stripe') {
                 apiUrl = '/api/analytics/stripe';
                 body = { stripeSecretKey };
@@ -160,8 +171,6 @@ const AnalyticsPage = () => {
             updateFields = { clerk_secret_key: encryptCreds(clerkSecretKey) };
         } else if (platform === 'supabase') {
             updateFields = { supabase_url: encryptCreds(supabaseUrl), supabase_service_key: encryptCreds(supabaseServiceKey) };
-        } else if (platform === 'github') {
-            updateFields = { github_token: encryptCreds(githubToken), github_repo: encryptCreds(githubOwner && githubRepo ? `${githubOwner}/${githubRepo}` : '') };
         } else if (platform === 'stripe') {
             updateFields = { stripe_secret_key: encryptCreds(stripeSecretKey) };
         }
@@ -183,8 +192,6 @@ const AnalyticsPage = () => {
                 if (data.clerk_secret_key) data.clerk_secret_key = decryptCreds(data.clerk_secret_key);
                 if (data.supabase_url) data.supabase_url = decryptCreds(data.supabase_url);
                 if (data.supabase_service_key) data.supabase_service_key = decryptCreds(data.supabase_service_key);
-                if (data.github_token) data.github_token = decryptCreds(data.github_token);
-                if (data.github_repo) data.github_repo = decryptCreds(data.github_repo);
                 if (data.stripe_secret_key) data.stripe_secret_key = decryptCreds(data.stripe_secret_key);
                 setApp(data);
             }
@@ -203,7 +210,7 @@ const AnalyticsPage = () => {
                         </SelectTrigger>
                         <SelectContent>
                             <SelectItem value="clerk">Clerk</SelectItem>
-                            <SelectItem value="supabase">Supabase</SelectItem>
+                            {/* <SelectItem value="supabase">Supabase</SelectItem> */}
                             <SelectItem value="github">Github</SelectItem>
                             <SelectItem value="stripe">Stripe</SelectItem>
                         </SelectContent>
@@ -236,16 +243,6 @@ const AnalyticsPage = () => {
                                 <Input type="text" value={supabaseServiceKey} onChange={e => { setSupabaseServiceKey(e.target.value); setCredsDirty(true); }} placeholder="SUPABASE_SERVICE_KEY" />
                             </div>
                         )}
-                        {platform === "github" && (
-                            <div className="flex flex-col gap-2 w-full max-w-md">
-                                <span className="text-sm">GitHub Token</span>
-                                <Input type="text" value={githubToken} onChange={e => { setGithubToken(e.target.value); setCredsDirty(true); }} placeholder="GITHUB_TOKEN" />
-                                <span className="text-sm">Owner</span>
-                                <Input type="text" value={githubOwner} onChange={e => { setGithubOwner(e.target.value); setCredsDirty(true); }} placeholder="owner" />
-                                <span className="text-sm">Repo</span>
-                                <Input type="text" value={githubRepo} onChange={e => { setGithubRepo(e.target.value); setCredsDirty(true); }} placeholder="repo" />
-                            </div>
-                        )}
                         {platform === "stripe" && (
                             <div className="flex flex-col gap-2 w-full max-w-md">
                                 <span className="text-sm">Stripe Secret Key</span>
@@ -261,28 +258,297 @@ const AnalyticsPage = () => {
                     </>
                 )}
             </div>
+            <div>
+                {platform === "github" && (
+                    <div className="flex gap-3 flex-col">
+                        <div className="flex flex-col gap-2 w-full max-w-md">
+                            <Link href={`https://github.com/${app.github_repo}`} target="_blank">
+                                <Button variant="outline">
+                                    <GithubIcon className="w-4 h-4" />
+                                    <span>Repo</span>
+                                </Button>
+                            </Link>
+                        </div><div className="flex flex-col gap-2 w-full max-w-md">
+                            <Link href={`https://docs.github.com/`} target="_blank">
+                                <Button variant="outline">
+                                    <BookIcon className="w-4 h-4" />
+                                    <span>Docs</span>
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
 
+                )}
+                {platform === "clerk" && (
+                    <div className="flex gap-3 flex-col">
+                        <div className="flex flex-col gap-2 w-full max-w-md">
+                            <Link href={`https://dashboard.clerk.com/`} target="_blank">
+                                <Button variant="outline">
+                                    <LayoutDashboard className="w-4 h-4" />
+                                    <span>Clerk Dashboard</span>
+                                </Button>
+                            </Link>
+                        </div>                        <div className="flex flex-col gap-2 w-full max-w-md">
+                            <Link href={`https://docs.clerk.com/`} target="_blank">
+                                <Button variant="outline">
+                                    <BookIcon className="w-4 h-4" />
+                                    <span>Docs</span>
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                )}
+                {platform === "supabase" && (
+                    <div className="flex gap-3 flex-col">
+                        <div className="flex flex-col gap-2 w-full max-w-md">
+                            <Link href={`https://dashboard.clerk.com/`} target="_blank">
+                                <Button variant="outline">
+                                    <LayoutDashboard className="w-4 h-4" />
+                                    <span>Clerk Dashboard</span>
+                                </Button>
+                            </Link>
+                        </div>
+                        <div className="flex flex-col gap-2 w-full max-w-md">
+                            <Link href={`https://docs.supabase.com/`} target="_blank">
+                                <Button variant="outline">
+                                    <BookIcon className="w-4 h-4" />
+                                    <span>Docs</span>
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                )}
+                {platform === "stripe" && (
+                    <div className="flex gap-3 flex-col">
+                        <div className="flex flex-col gap-2 w-full max-w-md">
+                            <Link href={`https://dashboard.stripe.com/`} target="_blank">
+                                <Button variant="outline">
+                                    <CreditCard className="w-4 h-4" />
+                                    <span>Stripe Dashboard</span>
+                                </Button>
+                            </Link>
+                        </div>
+                        <div className="flex flex-col gap-2 w-full max-w-md">
+                            <Link href={`https://docs.stripe.com/`} target="_blank">
+                                <Button variant="outline">
+                                    <BookIcon className="w-4 h-4" />
+                                    <span>Docs</span>
+                                </Button>
+                            </Link>
+                        </div>
+                    </div>
+                )}
+
+            </div>
+            {/* Metrics cards row remains unchanged */}
             <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4">
                 {loadingAnalytics ? (
                     <div className="col-span-full flex justify-center items-center">
-                        <Progress />
-                        <span className="ml-2">Loading analytics...</span>
+                        <Progress value={75} />
+                        <p className="ml-2">Loading analytics...</p>
                     </div>
                 ) : (
-                    analytics.map((item: any) => (
+                    analytics.filter((item: any) => !(
+                        Array.isArray(item.value) && item.value.length > 0 && typeof item.value[0] === 'object' && !(platform === 'supabase' && item.name === 'tableStats')
+                    )).map((item: any) => (
                         <Card key={item.name}>
                             <CardHeader>
                                 <CardTitle className="text-3xl">{item.name.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())}</CardTitle>
                             </CardHeader>
                             <CardContent>
                                 <p className="text-5xl">
-                                    {(platform === 'stripe' && item.name === 'totalRevenue') ? `$${item.value}` : item.value}
+                                    {(platform === 'stripe' && item.name === 'totalRevenue') ? `$${item.value}` : String(item.value)}
                                 </p>
                             </CardContent>
                         </Card>
                     ))
                 )}
             </div>
+            {/* Supabase: Render Table Stats as a table below the cards */}
+            {!loadingAnalytics && platform === 'supabase' && (() => {
+                const tableStats = analytics.find((item: any) => item.name === 'tableStats')?.value || [];
+                if (Array.isArray(tableStats) && tableStats.length > 0 && typeof tableStats[0] === 'object') {
+                    const keys = Object.keys(tableStats[0]);
+                    return (
+                        <div className="mt-8">
+                            <h2 className="text-2xl font-bold mb-2">Table Stats</h2>
+                            <div className="overflow-x-auto rounded-lg border bg-background">
+                                <table className="min-w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-muted">
+                                            {keys.map((key) => (
+                                                <th key={key} className="px-4 py-2 text-left font-semibold whitespace-nowrap border-b">{key}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {tableStats.map((row: any, idx: number) => (
+                                            <tr key={idx} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/50'}>
+                                                {keys.map((key) => {
+                                                    const val = row[key];
+                                                    const isObject = typeof val === 'object' && val !== null;
+                                                    const isLongString = typeof val === 'string' && val.length > 30;
+                                                    if (isObject || isLongString) {
+                                                        return (
+                                                            <td key={key} className="px-4 py-2 border-b max-w-xs truncate">
+                                                                <Dialog>
+                                                                    <DialogTrigger asChild>
+                                                                        <button className="underline text-blue-500 hover:text-blue-700 text-xs">View</button>
+                                                                    </DialogTrigger>
+                                                                    <DialogContent className="max-w-2xl w-full">
+                                                                        <DialogHeader>
+                                                                            <DialogTitle>Full Value</DialogTitle>
+                                                                        </DialogHeader>
+                                                                        <pre className="whitespace-pre-wrap break-all text-xs bg-muted/30 rounded p-2 max-h-[60vh] overflow-auto">
+                                                                            {isObject ? JSON.stringify(val, null, 2) : val}
+                                                                        </pre>
+                                                                    </DialogContent>
+                                                                </Dialog>
+                                                            </td>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <td key={key} className="px-4 py-2 border-b max-w-xs truncate">{String(val)}</td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        </div>
+                    );
+                }
+                return null;
+            })()}
+            {/* Stripe: Render Products, Customers, Transactions in Tabs */}
+            {!loadingAnalytics && platform === 'stripe' && (
+                (() => {
+                    const products = analytics.find((item: any) => item.name === 'products')?.value || [];
+                    const customers = analytics.find((item: any) => item.name === 'customers')?.value || [];
+                    const transactions = analytics.find((item: any) => item.name === 'transactions')?.value || [];
+                    // Helper to render a table
+                    const renderTable = (data: any[]) => {
+                        if (!data || data.length === 0) return <div className="p-4 text-muted-foreground">No data available.</div>;
+                        const keys = Object.keys(data[0]);
+                        return (
+                            <div className="overflow-x-auto rounded-lg border bg-background">
+                                <table className="min-w-full text-sm">
+                                    <thead>
+                                        <tr className="bg-muted">
+                                            {keys.map((key) => (
+                                                <th key={key} className="px-4 py-2 text-left font-semibold whitespace-nowrap border-b">{key}</th>
+                                            ))}
+                                        </tr>
+                                    </thead>
+                                    <tbody>
+                                        {data.map((row, idx) => (
+                                            <tr key={idx} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/50' + 'p-5'}>
+                                                {keys.map((key) => {
+                                                    const val = row[key];
+                                                    const isObject = typeof val === 'object' && val !== null;
+                                                    const isLongString = typeof val === 'string' && val.length > 30;
+                                                    if (isObject || isLongString) {
+                                                        return (
+                                                            <td key={key} className="px-4 py-2 border-b max-w-xs truncate">
+                                                                <Dialog>
+                                                                    <DialogTrigger asChild>
+                                                                        <button className="underline text-blue-500 hover:text-blue-700 text-xs">View</button>
+                                                                    </DialogTrigger>
+                                                                    <DialogContent className="max-w-2xl w-full">
+                                                                        <DialogHeader>
+                                                                            <DialogTitle>Full Value</DialogTitle>
+                                                                        </DialogHeader>
+                                                                        <pre className="whitespace-pre-wrap break-all text-xs bg-muted/30 rounded p-2 max-h-[60vh] overflow-auto">
+                                                                            {isObject ? JSON.stringify(val, null, 2) : val}
+                                                                        </pre>
+                                                                    </DialogContent>
+                                                                </Dialog>
+                                                            </td>
+                                                        );
+                                                    }
+                                                    return (
+                                                        <td key={key} className="border-b max-w-xs truncate p-5 py-8">{String(val)}</td>
+                                                    );
+                                                })}
+                                            </tr>
+                                        ))}
+                                    </tbody>
+                                </table>
+                            </div>
+                        );
+                    };
+                    return (
+                        <div className="mt-8">
+                            <Tabs defaultValue="products" className="w-full">
+                                <TabsList className="mb-4">
+                                    <TabsTrigger value="products">Products</TabsTrigger>
+                                    <TabsTrigger value="customers">Customers</TabsTrigger>
+                                    <TabsTrigger value="transactions">Transactions</TabsTrigger>
+                                </TabsList>
+                                <TabsContent value="products">
+                                    {renderTable(products)}
+                                </TabsContent>
+                                <TabsContent value="customers">
+                                    {renderTable(customers)}
+                                </TabsContent>
+                                <TabsContent value="transactions">
+                                    {renderTable(transactions)}
+                                </TabsContent>
+                            </Tabs>
+                        </div>
+                    );
+                })()
+            )}
+            {/* Other platforms: Render tables for array data below the cards */}
+            {!loadingAnalytics && platform !== 'stripe' && analytics.filter((item: any) => Array.isArray(item.value) && item.value.length > 0 && typeof item.value[0] === 'object').map((item: any) => (
+                <div key={item.name} className="mt-8">
+                    <h2 className="text-2xl font-bold mb-2">{item.name.replace(/([A-Z])/g, ' $1').replace(/^./, (str: string) => str.toUpperCase())}</h2>
+                    <div className="overflow-x-auto rounded-lg border bg-background">
+                        <table className="min-w-full text-sm">
+                            <thead>
+                                <tr className="bg-muted">
+                                    {Object.keys(item.value[0]).map((key) => (
+                                        <th key={key} className="px-4 py-2 text-left font-semibold whitespace-nowrap border-b">{key}</th>
+                                    ))}
+                                </tr>
+                            </thead>
+                            <tbody>
+                                {item.value.map((row: any, idx: number) => (
+                                    <tr key={idx} className={idx % 2 === 0 ? 'bg-background' : 'bg-muted/50'}>
+                                        {Object.values(row).map((val, i) => {
+                                            const isObject = typeof val === 'object' && val !== null;
+                                            const isLongString = typeof val === 'string' && val.length > 30;
+                                            if (isObject || isLongString) {
+                                                return (
+                                                    <td key={i} className="px-4 py-2 border-b max-w-xs truncate">
+                                                        <Dialog>
+                                                            <DialogTrigger asChild>
+                                                                <button className="underline text-blue-500 hover:text-blue-700 text-xs">View</button>
+                                                            </DialogTrigger>
+                                                            <DialogContent className="max-w-2xl w-full">
+                                                                <DialogHeader>
+                                                                    <DialogTitle>Full Value</DialogTitle>
+                                                                </DialogHeader>
+                                                                <pre className="whitespace-pre-wrap break-all text-xs bg-muted/30 rounded p-2 max-h-[60vh] overflow-auto">
+                                                                    {isObject ? JSON.stringify(val, null, 2) : val}
+                                                                </pre>
+                                                            </DialogContent>
+                                                        </Dialog>
+                                                    </td>
+                                                );
+                                            }
+                                            return (
+                                                <td key={i} className="px-4 py-2 border-b max-w-xs truncate">{String(val)}</td>
+                                            );
+                                        })}
+                                    </tr>
+                                ))}
+                            </tbody>
+                        </table>
+                    </div>
+                </div>
+            ))}
         </div>
     )
 }

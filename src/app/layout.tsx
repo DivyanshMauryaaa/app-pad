@@ -42,9 +42,9 @@ export default function RootLayout({
           cz-shortcut-listen="false"
         >
           <header className="flex justify-between items-center p-4 gap-4 h-16 border-b border-gray-200 dark:border-gray-800">
-            <Link href="/">
+            <Link href="/dashboard">
               <div className="flex items-center gap-4">
-                <Image src="/logo.png" alt="AppPad" width={32} height={32} className='rounded-full' />
+                <Image src="/logo.png" alt="AppPad" width={32} height={32} className='rounded-sm' />
                 <h1 className='text-2xl font-bold text-blue-700 dark:text-blue-400'>AppPad</h1>
               </div>
             </Link>

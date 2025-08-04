@@ -20,8 +20,12 @@ export async function POST(req: NextRequest) {
     });
 
     // Commits in last 30 days
-    const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
-    const commits = await octokit.rest.repos.listCommits({ owner, repo, since });
+    // const since = new Date(Date.now() - 30 * 24 * 60 * 60 * 1000).toISOString();
+    // When was this repo created?
+    const repoData = await octokit.rest.repos.get({ owner, repo });
+    const repoCreatedAt = repoData.data.created_at;
+
+    const commits = await octokit.rest.repos.listCommits({ owner, repo, since: repoCreatedAt });
     const commitCount = commits.data.length;
 
     // Open PRs

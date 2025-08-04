@@ -87,9 +87,19 @@ export default function Page() {
 
             <Tabs defaultValue="codebase" className='w-full'>
                 <TabsList className="flex bg-background rounded-lg shadow py-3 px-6 gap-6 m-auto max-w-4xl border border-border">
-                    <TabsTrigger value="codebase" className='cursor-pointer hover:underline-offset-4 hover:bg-accent data-[state=active]:underline-offset-8'>Codebase</TabsTrigger>
-                    <TabsTrigger value="advanced" className='cursor-pointer hover:underline-offset-4 hover:bg-accent data-[state=active]:underline-offset-8'>Advanced</TabsTrigger>
-                    <TabsTrigger value="marketing" className='cursor-pointer hover:underline-offset-4 hover:bg-accent data-[state=active]:underline-offset-8'>Market</TabsTrigger>
+                    <TabsTrigger
+                        value="codebase"
+                        className="cursor-pointer hover:underline-offset-4 hover:bg-accent rounded-t-2xl rounded-b-sm data-[state=active]:underline data-[state=active]:underline-offset-8"
+                    >
+                        <p className='text-2xl p-3'>Codebase</p>
+
+                    </TabsTrigger>
+                    <TabsTrigger
+                        value="advanced"
+                        className="cursor-pointer hover:underline-offset-4 hover:bg-accent rounded-t-2xl rounded-b-sm data-[state=active]:underline data-[state=active]:underline-offset-8"
+                    >
+                        <p className='text-2xl p-3'>Advanced</p>
+                    </TabsTrigger>
                 </TabsList>
 
                 <TabsContent value="advanced" className='w-full'>

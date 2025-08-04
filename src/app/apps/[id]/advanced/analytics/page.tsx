@@ -60,6 +60,7 @@ const AnalyticsPage = () => {
                 .select('*')
                 .eq('id', appId)
                 .single();
+
             if (!error && data) {
                 // Decrypt creds if present
                 if (data.clerk_secret_key) data.clerk_secret_key = decryptCreds(data.clerk_secret_key);
@@ -197,6 +198,7 @@ const AnalyticsPage = () => {
             }
         }
     };
+
 
     return (
         <div className="space-y-4">

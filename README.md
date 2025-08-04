@@ -2,7 +2,7 @@
 
 > Save time. Build more.
 
-AppPad is your AI-powered assistant for managing codebase tasks, documentation, and bug detection — all from one smart interface. Designed for developers, startups, and teams who'd rather build than babysit boring workflows.
+AppPad is your time-saving project management tool built especially for small-teams & solo developers, so that they can focus more on coding & refining their product that writing README, docs, tasks etc.
 ---
 
 ## 🧠 Why AppPad?

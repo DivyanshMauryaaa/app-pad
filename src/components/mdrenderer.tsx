@@ -49,6 +49,15 @@ const MdRenderer = ({ content }: { content: string }) => {
                     hr: ({ node, ...props }) => (
                         <hr className='py-2 mt-4' />
                     ),
+                    li: ({ node, ...props }) => (
+                        <li className="my-1 pl-2 list-inside" {...props} />
+                    ),
+                    ul: ({ node, ...props }) => (
+                        <ul className="list-disc ml-6" {...props} />
+                    ),
+                    ol: ({ node, ...props }) => (
+                        <ol className="list-decimal ml-6" {...props} />
+                    ),
                     code({
                         inline,
                         className,

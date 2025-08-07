@@ -14,6 +14,7 @@ import { Progress } from "@/components/ui/progress";
 import AnalyticsPage from "./analytics/page";
 import Link from "next/link";
 import LegalVaultPage from "./legal-vault/page";
+import SEOPage from "./seo-maker/page";
 
 const AdvancedPage = () => {
     const [app, setApp] = useState<any>();
@@ -78,7 +79,7 @@ const AdvancedPage = () => {
                             <MailIcon className="w-4 h-4" />
                             <span className="hidden sm:inline">Email & Post Manager</span>
                         </TabsTrigger>
-                        <TabsTrigger value="blogwriter" className="px-6 py-2 rounded-t-md font-semibold data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground hover:bg-muted hover:text-white transition-all">
+                        <TabsTrigger value="seo-content" className="px-6 py-2 rounded-t-md font-semibold data-[state=active]:bg-white data-[state=active]:text-gray-800 data-[state=inactive]:bg-transparent data-[state=inactive]:text-muted-foreground hover:bg-muted hover:text-white transition-all">
                             <PencilIcon className="w-4 h-4" />
                             <span className="hidden sm:inline">SEO & Content</span>
                         </TabsTrigger>
@@ -112,8 +113,8 @@ const AdvancedPage = () => {
                 </TabsContent>
 
                 {/*  Tab */}
-                <TabsContent value="api-config" className="w-full flex-1 px-0 py-8">
-        
+                <TabsContent value="seo-content" className="w-full flex-1 px-0 py-8">
+                    <SEOPage />
                 </TabsContent>
             </Tabs>
         </div>
